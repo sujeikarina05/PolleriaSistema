@@ -80,17 +80,11 @@ public class MozoFrame extends JFrame {
 
     /* ---------- Acciones ---------- */
     private void abrirPedido(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Funcionalidad de pedido aún no implementada.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new PedidoFrame().setVisible(true);
+        new PedidoFrame().setVisible(true);
     }
 
     private void verMesas(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Funcionalidad de mesas aún no implementada.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new MesaFrame().setVisible(true);
+        new MesaFrame().setVisible(true);
     }
 
     private void cerrarSesion(ActionEvent e) {

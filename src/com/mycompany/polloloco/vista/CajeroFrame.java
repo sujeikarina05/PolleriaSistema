@@ -90,24 +90,17 @@ public class CajeroFrame extends JFrame {
     // ---------- ACCIONES ----------
 
     private void registrarPago(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Funcionalidad de registro de pago pendiente.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new PagoFrame().setVisible(true);
+        new PagoFrame().setVisible(true);
     }
 
     private void emitirComprobante(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Funcionalidad de comprobante pendiente.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new ComprobanteFrame().setVisible(true);
+        new ComprobanteFrame().setVisible(true);
     }
 
     private void exportarExcel(ActionEvent e) {
         JOptionPane.showMessageDialog(this,
                 "Exportación de ventas a Excel pendiente.",
                 "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: usar ReporteExcelExporter con ventas del día
     }
 
     private void cerrarSesion(ActionEvent e) {

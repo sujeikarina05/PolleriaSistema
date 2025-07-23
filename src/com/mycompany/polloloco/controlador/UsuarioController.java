@@ -35,4 +35,14 @@ public class UsuarioController {
     public Usuario getUsuarioActual() {
         return Sesion.getUsuarioActual();
     }
+
+    /** Devuelve la lista de todos los usuarios. */
+    public java.util.List<Usuario> listarUsuarios() {
+        return usuarioDAO.listar();
+    }
+
+    /** Permite acceso a DAO para vistas sencillas. */
+    public UsuarioDAO getDao() {
+        return usuarioDAO;
+    }
 }

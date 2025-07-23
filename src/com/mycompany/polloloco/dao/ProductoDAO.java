@@ -43,4 +43,84 @@ public class ProductoDAO {
 
         return productos;
     }
+
+    // ---- Métodos faltantes utilizados por el controlador ----
+
+    public boolean insertar(Producto producto) {
+        String sql = "INSERT INTO producto(nombre, descripcion, precio, stock, id_categoria) "
+                   + "VALUES(?,?,?,?,?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, producto.getNombre());
+            ps.setString(2, producto.getDescripcion());
+            ps.setDouble(3, producto.getPrecio());
+            ps.setInt(4, producto.getStock());
+            ps.setInt(5, producto.getIdCategoria());
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error al insertar producto: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean actualizar(Producto producto) {
+        String sql = "UPDATE producto SET nombre=?, descripcion=?, precio=?, stock=?, id_categoria=? WHERE id_producto=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, producto.getNombre());
+            ps.setString(2, producto.getDescripcion());
+            ps.setDouble(3, producto.getPrecio());
+            ps.setInt(4, producto.getStock());
+            ps.setInt(5, producto.getIdCategoria());
+            ps.setInt(6, producto.getId());
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar producto: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean eliminar(int idProducto) {
+        String sql = "DELETE FROM producto WHERE id_producto = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idProducto);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error al eliminar producto: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Producto> buscarPorNombre(String nombre) {
+        List<Producto> lista = new ArrayList<>();
+        String sql = "SELECT * FROM producto WHERE nombre LIKE ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + nombre + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Producto p = new Producto();
+                    p.setId(rs.getInt("id_producto"));
+                    p.setNombre(rs.getString("nombre"));
+                    p.setDescripcion(rs.getString("descripcion"));
+                    p.setPrecio(rs.getDouble("precio"));
+                    p.setStock(rs.getInt("stock"));
+                    p.setIdCategoria(rs.getInt("id_categoria"));
+                    lista.add(p);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al buscar producto: " + e.getMessage());
+        }
+        return lista;
+    }
 }
