@@ -53,7 +53,7 @@ public class PedidoDAO {
             PreparedStatement psDetalle = conn.prepareStatement(sqlDetalle);
             for (DetallePedido det : pedido.getDetalle()) {
                 psDetalle.setInt(1, idPedidoGenerado);
-                psDetalle.setInt(2, det.getIdProducto());
+                psDetalle.setInt(2, det.getProducto().getId());
                 psDetalle.setInt(3, det.getCantidad());
                 psDetalle.setDouble(4, det.getPrecioUnitario());
                 psDetalle.addBatch();
@@ -67,5 +67,32 @@ public class PedidoDAO {
             System.err.println("Error al guardar pedido: " + e.getMessage());
             return false;
         }
+    }
+
+    // --- Métodos simplificados utilizados por el controlador ---
+
+    /** Inserta un pedido (alias de guardar). */
+    public boolean insertar(Pedido pedido) {
+        return guardar(pedido);
+    }
+
+    /** Lista todos los pedidos. Implementación pendiente. */
+    public java.util.List<Pedido> listar() {
+        return new java.util.ArrayList<>();
+    }
+
+    /** Busca un pedido por ID. Implementación pendiente. */
+    public Pedido buscarPorId(int id) {
+        return null;
+    }
+
+    /** Elimina un pedido. Implementación pendiente. */
+    public boolean eliminar(int id) {
+        return false;
+    }
+
+    /** Actualiza un pedido. Implementación pendiente. */
+    public boolean actualizar(Pedido pedido) {
+        return false;
     }
 }
