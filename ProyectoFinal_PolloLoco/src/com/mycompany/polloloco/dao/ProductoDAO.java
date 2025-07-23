@@ -28,7 +28,7 @@ public class ProductoDAO {
 
             while (rs.next()) {
                 Producto producto = new Producto();
-                // En la base de datos el campo se llama simplemente "id"
+                // En esta base de datos la columna es simplemente "id"
                 producto.setId(rs.getInt("id"));
                 producto.setNombre(rs.getString("nombre"));
                 producto.setDescripcion(rs.getString("descripcion"));
@@ -67,7 +67,7 @@ public class ProductoDAO {
     }
 
     public boolean actualizar(Producto producto) {
-        // La clave primaria de la tabla es "id"
+        // La tabla usa "id" como clave primaria
         String sql = "UPDATE producto SET nombre=?, descripcion=?, precio=?, stock=?, id_categoria=? WHERE id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -110,7 +110,6 @@ public class ProductoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Producto p = new Producto();
-                    // La consulta usa "id" como nombre de la columna
                     p.setId(rs.getInt("id"));
                     p.setNombre(rs.getString("nombre"));
                     p.setDescripcion(rs.getString("descripcion"));
