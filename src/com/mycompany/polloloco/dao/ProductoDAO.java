@@ -43,4 +43,23 @@ public class ProductoDAO {
 
         return productos;
     }
+
+    // ---- Métodos faltantes utilizados por el controlador ----
+
+    public boolean insertar(Producto producto) {
+        // Implementación real pendiente
+        return false;
+    }
+
+    public boolean actualizar(Producto producto) {
+        return false;
+    }
+
+    public boolean eliminar(int idProducto) {
+        return false;
+    }
+
+    public List<Producto> buscarPorNombre(String nombre) {
+        return new ArrayList<>();
+    }
 }
