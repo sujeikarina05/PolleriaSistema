@@ -7,50 +7,83 @@ import com.mycompany.polloloco.util.ValidadorCampos;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
-/**
- * Pantalla de ingreso al sistema Pollería Pollo Loco.
- */
+/** Pantalla de ingreso al sistema Pollería Pollo Loco. */
 public class LoginFrame extends JFrame {
 
-    private final JTextField txtUsuario = new JTextField();
-    private final JPasswordField txtClave = new JPasswordField();
-    private final JButton btnIngresar = new JButton("Ingresar");
-    private final UsuarioController controller = new UsuarioController();
+    private final JTextField     txtUsuario = new JTextField(15);
+    private final JPasswordField txtClave   = new JPasswordField(15);
+    private final JButton        btnIngresar     = new JButton("Ingresar");
+    private final JButton        btnToggleClave  = new JButton("Mostrar");
+    private final UsuarioController controller   = new UsuarioController();
 
     public LoginFrame() {
-        setTitle("Ingreso al Sistema - Pollería Pollo Loco");
+        super("Ingreso al Sistema - Pollería Pollo Loco");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(null);
         setResizable(false);
-
-        JLabel lblUsuario = new JLabel("Usuario:");
-        JLabel lblClave = new JLabel("Contraseña:");
-
-        lblUsuario.setBounds(40, 30, 100, 25);
-        txtUsuario.setBounds(140, 30, 160, 25);
-        lblClave.setBounds(40, 70, 100, 25);
-        txtClave.setBounds(140, 70, 160, 25);
-        btnIngresar.setBounds(120, 120, 100, 30);
-
-        btnIngresar.addActionListener(e -> ingresar());
-
-        add(lblUsuario);
-        add(txtUsuario);
-        add(lblClave);
-        add(txtClave);
-        add(btnIngresar);
-
-        setSize(360, 220);
+        initUI();
+        pack();
         setLocationRelativeTo(null);
+        txtUsuario.requestFocusInWindow();
     }
 
-    private void ingresar() {
+    /* ---------- Construcción de la UI ---------- */
+    private void initUI() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5,5,5,5);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        /* Etiquetas y campos */
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel.add(new JLabel("Usuario:"), gbc);
+        gbc.gridx = 1;
+        panel.add(txtUsuario, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(new JLabel("Contraseña:"), gbc);
+        gbc.gridx = 1;
+        panel.add(txtClave, gbc);
+
+        /* Botón mostrar/ocultar clave */
+        btnToggleClave.setFocusable(false);
+        btnToggleClave.setMargin(new Insets(2,8,2,8));
+        btnToggleClave.addActionListener(e -> toggleClave());
+        gbc.gridx = 2;
+        panel.add(btnToggleClave, gbc);
+
+        /* Botón ingresar */
+        gbc.gridx = 1; gbc.gridy = 2; gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        btnIngresar.setPreferredSize(new Dimension(120, 30));
+        panel.add(btnIngresar, gbc);
+
+        add(panel);
+
+        /* Listeners */
+        btnIngresar.addActionListener(this::accionIngresar);
+        // Enter dispara ingreso
+        getRootPane().setDefaultButton(btnIngresar);
+        // Esc cierra ventana
+        KeyStroke esc = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(esc, "SALIR");
+        getRootPane().getActionMap().put("SALIR", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) { dispose(); }
+        });
+    }
+
+    /* ---------- Acciones ---------- */
+    private void accionIngresar(ActionEvent e) {
         String usuario = txtUsuario.getText().trim();
-        String clave = new String(txtClave.getPassword()).trim();
+        String clave   = new String(txtClave.getPassword()).trim();
 
         if (ValidadorCampos.esVacio(usuario) || ValidadorCampos.esVacio(clave)) {
-            JOptionPane.showMessageDialog(this, "⚠️ Ingrese usuario y contraseña.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Ingrese usuario y contraseña.",
+                    "Campos vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -58,22 +91,33 @@ public class LoginFrame extends JFrame {
             Usuario u = Sesion.getUsuarioActual();
             String rol = u.getRol().toLowerCase();
 
-            JOptionPane.showMessageDialog(this, "✅ Bienvenido " + u.getNombre() + " (" + u.getRol() + ")");
+            JOptionPane.showMessageDialog(this,
+                    "Bienvenido " + u.getNombre() + " (" + u.getRol() + ")");
 
             switch (rol) {
                 case "administrador" -> new AdminFrame().setVisible(true);
-                case "cajero" -> new CajeroFrame().setVisible(true);
-                case "mozo" -> new MozoFrame().setVisible(true); // si tienes esta clase
-                default -> {
-                    JOptionPane.showMessageDialog(this, "⚠️ Rol no reconocido: " + u.getRol());
-                    return;
-                }
+                case "cajero"       -> new CajeroFrame().setVisible(true);
+                case "mozo"         -> new MozoFrame().setVisible(true);
+                default             -> JOptionPane.showMessageDialog(this,
+                                        "Rol no reconocido: " + u.getRol());
             }
-
-            dispose(); // cerrar login
+            dispose();
         } else {
-            JOptionPane.showMessageDialog(this, "❌ Usuario o contraseña incorrectos", "Error de autenticación", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Usuario o contraseña incorrectos",
+                    "Autenticación", JOptionPane.ERROR_MESSAGE);
             txtClave.setText("");
+        }
+    }
+
+    /* Mostrar u ocultar contraseña */
+    private void toggleClave() {
+        if (txtClave.getEchoChar() == 0) {
+            txtClave.setEchoChar('\u2022');   // •
+            btnToggleClave.setText("Mostrar");
+        } else {
+            txtClave.setEchoChar((char)0);
+            btnToggleClave.setText("Ocultar");
         }
     }
 }

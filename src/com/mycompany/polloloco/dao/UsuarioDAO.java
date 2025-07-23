@@ -29,19 +29,41 @@ public class UsuarioDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
+                // Obtener el nombre del rol desde la tabla "rol"
+                String rol = obtenerNombreRol(conn, rs.getInt("id_rol"));
+
                 Usuario u = new Usuario();
-                u.setId(rs.getInt("id_usuario"));
+                u.setId(rs.getInt("id"));
                 u.setNombre(rs.getString("nombre"));
                 u.setUsuario(rs.getString("usuario"));
                 u.setClave(rs.getString("clave"));
-                u.setRol(rs.getString("rol"));
+                u.setRol(rol); // nombre del rol (Administrador, Mozo, etc.)
+
                 return u;
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al validar usuario: " + e.getMessage());
+            System.err.println("❌ Error al validar usuario: " + e.getMessage());
         }
 
-        return null; // no encontrado
+        return null; // Usuario no encontrado
+    }
+
+    /**
+     * Obtiene el nombre del rol a partir de su ID.
+     * @param conn conexión activa
+     * @param idRol ID del rol
+     * @return nombre del rol
+     */
+    private String obtenerNombreRol(Connection conn, int idRol) throws SQLException {
+        String sql = "SELECT nombre FROM rol WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idRol);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("nombre");
+            }
+        }
+        return "Desconocido";
     }
 }
