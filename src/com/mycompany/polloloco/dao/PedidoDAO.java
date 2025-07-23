@@ -12,30 +12,30 @@ import java.util.List;
  */
 public class PedidoDAO {
 
-    /* ---------- INSERTAR (cabecera + detalle en transacción) ---------- */
+    /* ---------- INSERTAR (cabecera + detalle, transacción) ---------- */
     public boolean guardar(Pedido pedido) {
         String sqlCab = """
-            INSERT INTO pedido (id_mesa, id_usuario, fecha_pedido, total)
-            VALUES (?,?,?,?)
-            """;
+                INSERT INTO pedido (id_mesa, id_usuario, fecha_pedido, total)
+                VALUES (?,?,?,?)
+                """;
         String sqlDet = """
-            INSERT INTO detalle_pedido
-            (id_pedido, id_producto, cantidad, precio_unitario)
-            VALUES (?,?,?,?)
-            """;
+                INSERT INTO detalle_pedido
+                (id_pedido, id_producto, cantidad, precio_unitario)
+                VALUES (?,?,?,?)
+                """;
 
         try (Connection cn = DatabaseConnection.getConnection()) {
             cn.setAutoCommit(false);
 
-            /* Cabecera */
+            /* --- Cabecera --- */
             int idGen;
             try (PreparedStatement ps = cn.prepareStatement(sqlCab,
                     Statement.RETURN_GENERATED_KEYS)) {
 
-                ps.setInt    (1, pedido.getIdMesa());
-                ps.setInt    (2, pedido.getIdUsuario());
-                ps.setTimestamp(3, Timestamp.valueOf(pedido.getFechaPedido()));
-                ps.setDouble (4, pedido.getTotal());
+                ps.setInt      (1, pedido.getIdMesa());
+                ps.setInt      (2, pedido.getIdUsuario());
+                ps.setTimestamp(3, Timestamp.valueOf(pedido.getFechaPedido())); // LocalDateTime
+                ps.setDouble   (4, pedido.getTotal());
 
                 if (ps.executeUpdate() == 0) { cn.rollback(); return false; }
 
@@ -45,7 +45,7 @@ public class PedidoDAO {
                 }
             }
 
-            /* Detalle */
+            /* --- Detalle --- */
             try (PreparedStatement psDet = cn.prepareStatement(sqlDet)) {
                 for (DetallePedido d : pedido.getDetalle()) {
                     psDet.setInt   (1, idGen);
@@ -66,12 +66,12 @@ public class PedidoDAO {
         }
     }
 
-    /* Alias para el controlador */
-    public boolean insertar(Pedido p)            { return guardar(p); }
+    /* Alias utilizado por el controlador */
+    public boolean insertar(Pedido p) { return guardar(p); }
 
-    /* ---------- SELECTS BÁSICOS (implementaciones mínimas) ---------- */
+    /* ---------- SELECTS BÁSICOS ---------- */
 
-    /** Devuelve todos los pedidos con total y fecha; sin detalle para agilizar. */
+    /** Devuelve todos los pedidos (solo cabecera). */
     public List<Pedido> listar() {
         List<Pedido> lista = new ArrayList<>();
         String sql = "SELECT * FROM pedido ORDER BY id DESC";
@@ -81,29 +81,26 @@ public class PedidoDAO {
 
             while (rs.next()) {
                 Pedido p = new Pedido();
-                p.setId               (rs.getInt("id"));
-                p.setIdMesa           (rs.getInt("id_mesa"));
-                p.setIdUsuario        (rs.getInt("id_usuario"));
-                p.setFechaPedido      (rs.getTimestamp("fecha_pedido").toLocalDateTime());
-                p.setTotal            (rs.getDouble("total"));
+                p.setId          (rs.getInt("id"));
+                p.setIdMesa      (rs.getInt("id_mesa"));
+                p.setIdUsuario   (rs.getInt("id_usuario"));
+                p.setFechaPedido (rs.getTimestamp("fecha_pedido").toLocalDateTime());
+                p.setTotal       (rs.getDouble("total"));
                 lista.add(p);
             }
         } catch (SQLException ex) { ex.printStackTrace(); }
         return lista;
     }
 
-    /** Trae cabecera y detalle de un pedido. */
-    public Pedido buscarPorId(int id) {
-        // Implementar si lo necesitas en ReporteFrame o ComprobanteFrame
-        return null;
-    }
+    /** Ejemplo de búsqueda detallada (pendiente de implementar). */
+    public Pedido buscarPorId(int id) { return null; }
 
-    public boolean eliminar(int id)   { /* opcional */ return false; }
-    public boolean actualizar(Pedido p){ /* opcional */ return false; }
+    public boolean eliminar  (int id)    { return false; }
+    public boolean actualizar(Pedido p)  { return false; }
 
-    /* ---------- Métodos de apoyo para Mozo/Cajero ---------- */
+    /* ---------- Utilidades ---------- */
 
-    /** Cambia el estado del pedido (Pendiente, Preparación, Entregado, Cancelado). */
+    /** Cambia el estado del pedido. */
     public boolean actualizarEstado(int idPedido, String nuevoEstado) {
         String sql = "UPDATE pedido SET estado=? WHERE id=?";
         try (Connection cn = DatabaseConnection.getConnection();
@@ -115,9 +112,12 @@ public class PedidoDAO {
         return false;
     }
 
-    /** Verifica si existe un pedido activo en una mesa (para evitar duplicidad). */
+    /** Verifica si ya existe un pedido activo en la mesa. */
     public boolean existePedidoActivoEnMesa(int idMesa) {
-        String sql = "SELECT 1 FROM pedido WHERE id_mesa=? AND estado IN ('Pendiente','Preparación')";
+        String sql = """
+                SELECT 1 FROM pedido
+                WHERE id_mesa=? AND estado IN ('Pendiente','Preparación')
+                """;
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, idMesa);

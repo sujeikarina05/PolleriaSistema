@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
 /** Panel principal para mozos: creación de pedidos y gestión de mesas. */
 public class MozoFrame extends JFrame {
 
-    private JLabel  lblBienvenida;
+    private JLabel lblBienvenida;
     private JButton btnNuevoPedido;
     private JButton btnVerMesas;
     private JButton btnCerrarSesion;
@@ -35,60 +35,56 @@ public class MozoFrame extends JFrame {
         lblBienvenida.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(lblBienvenida, BorderLayout.NORTH);
 
-        /* Botonera central */
+        /* Botonera */
         JPanel centro = new JPanel(new GridBagLayout());
         centro.setBorder(BorderFactory.createEmptyBorder(30, 60, 30, 60));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill   = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(12, 0, 12, 0);
         gbc.weightx = 1;
 
-        btnNuevoPedido  = new JButton("Registrar nuevo pedido");
-        btnVerMesas     = new JButton("Ver mesas disponibles");
-        btnCerrarSesion = new JButton("Cerrar sesión");
+        btnNuevoPedido   = new JButton("Registrar nuevo pedido");
+        btnVerMesas      = new JButton("Ver mesas disponibles");
+        btnCerrarSesion  = new JButton("Cerrar sesión");
 
-        /* Mnemonics y tooltips */
-        btnNuevoPedido.setMnemonic(KeyEvent.VK_N);
-        btnVerMesas.setMnemonic(KeyEvent.VK_M);
-        btnCerrarSesion.setMnemonic(KeyEvent.VK_Q);
+        btnNuevoPedido.setMnemonic(KeyEvent.VK_N);    // Alt+N
+        btnVerMesas.setMnemonic(KeyEvent.VK_M);       // Alt+M
+        btnCerrarSesion.setMnemonic(KeyEvent.VK_Q);   // Alt+Q
 
         btnNuevoPedido.setToolTipText("Ctrl+N – Abrir registro de pedidos");
         btnVerMesas.setToolTipText("Ctrl+M – Mostrar estado de mesas");
         btnCerrarSesion.setToolTipText("Ctrl+Q – Cerrar sesión");
 
-        /* Listeners */
         btnNuevoPedido.addActionListener(this::abrirPedido);
         btnVerMesas.addActionListener(this::verMesas);
         btnCerrarSesion.addActionListener(this::cerrarSesion);
 
-        /* Añadir botones */
         gbc.gridy = 0; centro.add(btnNuevoPedido,  gbc);
         gbc.gridy = 1; centro.add(btnVerMesas,     gbc);
         gbc.gridy = 2; centro.add(btnCerrarSesion, gbc);
+
         add(centro, BorderLayout.CENTER);
 
         /* Foco inicial */
         SwingUtilities.invokeLater(btnNuevoPedido::requestFocusInWindow);
 
+        /* Atajos globales Ctrl+N / Ctrl+M / Ctrl+Q */
         registrarAccesosDirectos();
     }
 
     private void actualizarBienvenida() {
         Usuario u = Sesion.getUsuarioActual();
-        lblBienvenida.setText("Bienvenido, " + (u != null ? u.getNombre() : "Mozo"));
+        String nombre = (u != null && u.getNombre() != null) ? u.getNombre() : "Mozo";
+        lblBienvenida.setText("Bienvenido, " + nombre);
     }
 
     /* ---------- Acciones ---------- */
     private void abrirPedido(ActionEvent e) {
-        new PedidoFrame().setVisible(true);   // Asegúrate de tener PedidoFrame importado
+        new PedidoFrame().setVisible(true);
     }
 
     private void verMesas(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Módulo Mesas aún no implementado.",
-                "Info", JOptionPane.INFORMATION_MESSAGE);
-        // Cuando crees MesaFrame:
-        // new MesaFrame().setVisible(true);
+        new MesaFrame().setVisible(true);
     }
 
     private void cerrarSesion(ActionEvent e) {
@@ -105,21 +101,15 @@ public class MozoFrame extends JFrame {
     /* Atajos globales */
     private void registrarAccesosDirectos() {
         JRootPane root = getRootPane();
-        InputMap im  = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap am = root.getActionMap();
+        InputMap  im   = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am   = root.getActionMap();
 
         im.put(KeyStroke.getKeyStroke("ctrl N"), "NUEVO_PEDIDO");
         im.put(KeyStroke.getKeyStroke("ctrl M"), "VER_MESAS");
-        im.put(KeyStroke.getKeyStroke("ctrl Q"), "SALIR");
+        im.put(KeyStroke.getKeyStroke("ctrl Q"), "CERRAR_SESION");
 
-        am.put("NUEVO_PEDIDO", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { abrirPedido(e); }
-        });
-        am.put("VER_MESAS", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { verMesas(e); }
-        });
-        am.put("SALIR", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { cerrarSesion(e); }
-        });
+        am.put("NUEVO_PEDIDO",  new AbstractAction() { public void actionPerformed(ActionEvent e){ abrirPedido(e);} });
+        am.put("VER_MESAS",     new AbstractAction() { public void actionPerformed(ActionEvent e){ verMesas(e);} });
+        am.put("CERRAR_SESION", new AbstractAction() { public void actionPerformed(ActionEvent e){ cerrarSesion(e);} });
     }
 }
