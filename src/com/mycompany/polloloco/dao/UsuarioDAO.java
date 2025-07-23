@@ -8,7 +8,8 @@ import java.sql.ResultSet;
 /** DAO para operaciones sobre la tabla usuario. */
 public class UsuarioDAO {
     private static final String SQL_LOGIN =
-            "SELECT id, nombre, usuario, clave, id_rol FROM usuario WHERE usuario=? AND clave=?";
+            "SELECT u.id, u.nombre, u.usuario, u.clave, u.id_rol, r.nombre AS rol_nombre " +
+            "FROM usuario u JOIN rol r ON u.id_rol=r.id WHERE u.usuario=? AND u.clave=?";
 
     /**
      * Valida las credenciales del usuario. Si son correctas retorna el
@@ -27,6 +28,7 @@ public class UsuarioDAO {
                     u.setUsuario(rs.getString("usuario"));
                     u.setClave(rs.getString("clave"));
                     u.setIdRol(rs.getInt("id_rol"));
+                    u.setRolNombre(rs.getString("rol_nombre"));
                     return u;
                 }
             }

@@ -36,11 +36,17 @@ public class LoginFrame extends JFrame {
     }
 
     private void ingresar() {
-        String u = txtUsuario.getText();
-        String c = new String(txtClave.getPassword());
-        if (controller.login(u, c)) {
-            JOptionPane.showMessageDialog(this, "✅ Bienvenido " + u);
-            new AdminFrame().setVisible(true);
+        String usr = txtUsuario.getText();
+        String pwd = new String(txtClave.getPassword());
+        var usuario = controller.login(usr, pwd);
+        if (usuario != null) {
+            JOptionPane.showMessageDialog(this, "✅ Bienvenido " + usuario.getNombre());
+            switch (usuario.getRolNombre()) {
+                case "Administrador" -> new AdminFrame().setVisible(true);
+                case "Cajero" -> new CajeroFrame().setVisible(true);
+                case "Mozo" -> new MozoFrame().setVisible(true);
+                default -> new DashboardFrame().setVisible(true);
+            }
             dispose();
         } else {
             JOptionPane.showMessageDialog(this, "❌ Credenciales incorrectas");
