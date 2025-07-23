@@ -70,7 +70,7 @@ public class ReporteFrame extends JFrame {
         modelo.addRow(new Object[]{"2025‑07‑23", "#003", 78.90, "cajero1"});
     }
 
-    /** Exporta los datos visibles a un archivo Excel. */
+    /** Exporta los datos visibles a un archivo CSV. */
     private void exportarExcel() {
         if (modelo.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "⚠ No hay datos para exportar.");
@@ -84,9 +84,9 @@ public class ReporteFrame extends JFrame {
         ch.setDialogTitle("Guardar reporte");
         if (ch.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = ch.getSelectedFile().getAbsolutePath();
-            if (!path.toLowerCase().endsWith(".xlsx")) path += ".xlsx";
+            if (!path.toLowerCase().endsWith(".csv")) path += ".csv";
 
-            new ReporteExcelExporter().exportar(path, encabezados, filas);
+            ReporteExcelExporter.exportar(path, encabezados, filas);
             JOptionPane.showMessageDialog(this,
                     "Reporte exportado con " + filas.size() + " filas.",
                     "Éxito", JOptionPane.INFORMATION_MESSAGE);

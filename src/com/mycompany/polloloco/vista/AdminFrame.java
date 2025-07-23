@@ -2,6 +2,9 @@ package com.mycompany.polloloco.vista;
 
 import com.mycompany.polloloco.modelo.Usuario;
 import com.mycompany.polloloco.util.Sesion;
+import com.mycompany.polloloco.vista.UsuarioFrame;
+import com.mycompany.polloloco.vista.ProductoFrame;
+import com.mycompany.polloloco.vista.ReporteFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,24 +93,15 @@ public class AdminFrame extends JFrame {
 
     /* ---------- Acciones ---------- */
     private void gestionarUsuarios(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Módulo de usuarios aún no implementado.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new UsuarioFrame().setVisible(true);
+        new UsuarioFrame().setVisible(true);
     }
 
     private void gestionarProductos(ActionEvent e) {
-        JOptionPane.showMessageDialog(this,
-                "Módulo de productos aún no implementado.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: new ProductoFrame().setVisible(true);
+        new ProductoFrame().setVisible(true);
     }
 
     private void verReportes(ActionEvent e) {
-        // new ReporteFrame().setVisible(true);
-        JOptionPane.showMessageDialog(this,
-                "Módulo de reportes aún no implementado.",
-                "En desarrollo", JOptionPane.INFORMATION_MESSAGE);
+        new ReporteFrame().setVisible(true);
     }
 
     private void cerrarSesion(ActionEvent e) {
