@@ -38,48 +38,44 @@ public class UsuarioDAO {
 
     private Usuario mapRow(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
-        u.setId     (rs.getInt   ("id"));
+        u.setId     (rs.getInt("id"));
         u.setNombre (rs.getString("nombre"));
         u.setUsuario(rs.getString("usuario"));
         u.setClave  (rs.getString("clave")); // hash almacenado
-        u.setIdRol  (rs.getInt   ("id_rol"));
+        u.setIdRol  (rs.getInt("id_rol"));
         try {
             u.setActivo(rs.getBoolean("activo"));
         } catch (SQLException ex) {
-            // la columna 'activo' no existe en algunas bases
-            u.setActivo(true);
+            u.setActivo(true); // por compatibilidad
         }
         return u;
     }
 
     /* -------------------- login -------------------- */
 
-    /**
-     * Devuelve un {@link Usuario} si las credenciales (usuario + clave en texto
-     * plano) son correctas y el usuario está activo.
-     */
     public Optional<Usuario> login(String usr, String plainPass) {
         String sql = "SELECT * FROM usuario WHERE usuario=? AND clave=?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            // intento 1: contraseña en formato hash (nuevo esquema)
+            // Intento 1: clave en formato hash (nuevo esquema)
             ps.setString(1, usr);
             ps.setString(2, hash(plainPass));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
             }
 
-            // intento 2: contraseña almacenada en texto plano (esquemas antiguos)
+            // Intento 2: clave en texto plano (esquemas antiguos)
             ps.setString(2, plainPass);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
             }
+
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "login", ex);
         }
 
-        // --- Fallback a credenciales por defecto si BD no responde o no coincide ---
+        // Fallback por defecto
         if ("admin".equals(usr) && "1234".equals(plainPass)) {
             Usuario u = new Usuario();
             u.setId(0);
@@ -87,8 +83,10 @@ public class UsuarioDAO {
             u.setUsuario("admin");
             u.setClave(hash("1234"));
             u.setIdRol(1);
+            u.setActivo(true);
             return Optional.of(u);
         }
+
         return Optional.empty();
     }
 
@@ -107,7 +105,9 @@ public class UsuarioDAO {
             ps.setString(3, hash(u.getClave()));
             ps.setInt   (4, u.getIdRol());
             return ps.executeUpdate() > 0;
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "insertar", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "insertar", ex);
+        }
         return false;
     }
 
@@ -116,12 +116,13 @@ public class UsuarioDAO {
     public List<Usuario> listar(boolean soloActivos) {
         List<Usuario> lista = new ArrayList<>();
         String sql = "SELECT * FROM usuario" + (soloActivos ? " WHERE activo=1" : "");
-
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "listar", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "listar", ex);
+        }
         return lista;
     }
 
@@ -133,7 +134,9 @@ public class UsuarioDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
             }
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "buscarPorId", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "buscarPorId", ex);
+        }
         return Optional.empty();
     }
 
@@ -148,7 +151,9 @@ public class UsuarioDAO {
             ps.setInt   (3, u.getIdRol());
             ps.setInt   (4, u.getId());
             return ps.executeUpdate() > 0;
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "actualizar", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "actualizar", ex);
+        }
         return false;
     }
 
@@ -159,7 +164,9 @@ public class UsuarioDAO {
             ps.setString(1, hash(nuevaPlain));
             ps.setInt   (2, id);
             return ps.executeUpdate() > 0;
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "cambiarClave", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "cambiarClave", ex);
+        }
         return false;
     }
 
@@ -171,13 +178,14 @@ public class UsuarioDAO {
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "desactivar", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "desactivar", ex);
+        }
         return false;
     }
 
     /* -------------------- helpers -------------------- */
 
-    /** Comprueba si ya existe el nombre de usuario. */
     public boolean existeNombreUsuario(String username) {
         return existeUsuario(username);
     }
@@ -187,8 +195,12 @@ public class UsuarioDAO {
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, username);
-            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "existeUsuario", ex); }
-        return true; // por seguridad asumimos que existe
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "existeUsuario", ex);
+        }
+        return true; // Por seguridad asumimos que existe
     }
 }
