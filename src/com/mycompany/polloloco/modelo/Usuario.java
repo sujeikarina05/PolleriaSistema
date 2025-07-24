@@ -12,6 +12,7 @@ public class Usuario implements Serializable {
     private String nombre;       // nombre completo
     private String usuario;      // username único
     private String claveHash;    // SHA‑256 hash
+    private String clave;        // contraseña en texto plano (transient)
     private int idRol;           // FK -> rol(id)
     private boolean activo = true; // soft‑delete
 
@@ -52,8 +53,21 @@ public class Usuario implements Serializable {
     public String getClaveHash() { return claveHash; }
     public void setClaveHash(String claveHash) { this.claveHash = claveHash; }
 
+    public String getClave() { return clave; }
+    public void setClave(String clave) { this.clave = clave; }
+
     public int getIdRol() { return idRol; }
     public void setIdRol(int idRol) { this.idRol = idRol; }
+
+    /** Nombre del rol según su id. */
+    public String getRol() {
+        return switch (idRol) {
+            case 1 -> "Administrador";
+            case 2 -> "Cajero";
+            case 3 -> "Mozo";
+            default -> "";
+        };
+    }
 
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
@@ -75,6 +89,7 @@ public class Usuario implements Serializable {
         private final Usuario u = new Usuario();
         public Builder nombre(String n){u.setNombre(n); return this;}
         public Builder usuario(String u1){u.setUsuario(u1); return this;}
+        public Builder clave(String c){u.setClave(c); return this;}
         public Builder claveHash(String c){u.setClaveHash(c); return this;}
         public Builder idRol(int r){u.setIdRol(r); return this;}
         public Usuario build(){ return u; }

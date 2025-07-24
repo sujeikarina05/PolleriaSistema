@@ -1,10 +1,6 @@
 package com.mycompany.polloloco.util;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
@@ -80,58 +76,8 @@ public final class ReporteExcelExporter {
     private static void exportarXlsx(File archivo,
                                      List<String> headers,
                                      List<List<Object>> datos) throws IOException {
-        try (Workbook wb = new XSSFWorkbook()) {
-            Sheet sheet = wb.createSheet("Reporte");
-
-            // Estilos
-            CellStyle headerStyle = wb.createCellStyle();
-            Font bold = wb.createFont(); bold.setBold(true); headerStyle.setFont(bold);
-            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-
-            CreationHelper createHelper = wb.getCreationHelper();
-            CellStyle dateStyle = wb.createCellStyle();
-            dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("yyyy-mm-dd"));
-
-            CellStyle moneyStyle = wb.createCellStyle();
-            moneyStyle.setDataFormat(createHelper.createDataFormat().getFormat("$#,##0.00"));
-
-            // Encabezados
-            Row rowHead = sheet.createRow(0);
-            for (int c = 0; c < headers.size(); c++) {
-                Cell cell = rowHead.createCell(c);
-                cell.setCellValue(headers.get(c));
-                cell.setCellStyle(headerStyle);
-            }
-
-            // Datos
-            int r = 1;
-            for (List<Object> fila : datos) {
-                Row row = sheet.createRow(r++);
-                for (int c = 0; c < fila.size(); c++) {
-                    Object val = fila.get(c);
-                    Cell cell = row.createCell(c);
-                    if (val instanceof Number n) {
-                        cell.setCellValue(n.doubleValue());
-                        cell.setCellStyle(moneyStyle);
-                    } else if (val instanceof LocalDate d) {
-                        cell.setCellValue(java.sql.Date.valueOf(d));
-                        cell.setCellStyle(dateStyle);
-                    } else {
-                        cell.setCellValue(val != null ? val.toString() : "");
-                    }
-                }
-            }
-
-            // Autosize columnas
-            for (int c = 0; c < headers.size(); c++) sheet.autoSizeColumn(c);
-
-            // Guardar
-            try (FileOutputStream fos = new FileOutputStream(archivo)) {
-                wb.write(fos);
-            }
-        }
+        // Sin dependencia de Apache POI, exportamos un CSV con extensión XLSX
+        exportarCsv(archivo, headers, datos);
     }
 
     /* ------------------------------------------------------ */

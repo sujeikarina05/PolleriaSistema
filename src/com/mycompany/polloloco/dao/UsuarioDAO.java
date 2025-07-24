@@ -152,6 +152,11 @@ public class UsuarioDAO {
 
     /* -------------------- helpers -------------------- */
 
+    /** Comprueba si ya existe el nombre de usuario. */
+    public boolean existeNombreUsuario(String username) {
+        return existeUsuario(username);
+    }
+
     private boolean existeUsuario(String username) {
         String sql = "SELECT 1 FROM usuario WHERE usuario=?";
         try (Connection cn = DatabaseConnection.getConnection();

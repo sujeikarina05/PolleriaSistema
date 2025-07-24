@@ -112,7 +112,7 @@ public class MozoFrame extends JFrame {
         if (JOptionPane.showConfirmDialog(this,
                 "¿Seguro que deseas cerrar sesión?","Confirmar",
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-            Sesion.setUsuarioActual(null);
+            Sesion.cerrarSesion();
             dispose();
             new LoginFrame().setVisible(true);
         }

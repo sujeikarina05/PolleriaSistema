@@ -151,14 +151,16 @@ public class AdminFrame extends JFrame {
     }
 
     /* ---------- Acciones ---------- */
-    private void gestionarUsuarios (ActionEvent e) { new UsuarioFrame ().setVisible(true); }
+    private void gestionarUsuarios(ActionEvent e) {
+        JOptionPane.showMessageDialog(this, "Módulo de usuarios en desarrollo.");
+    }
     private void gestionarProductos(ActionEvent e) { new ProductoFrame().setVisible(true); }
     private void verReportes       (ActionEvent e) { new ReporteFrame ().setVisible(true); }
 
     private void cerrarSesion(ActionEvent e) {
         if (JOptionPane.showConfirmDialog(this, "¿Cerrar sesión?", "Confirmar",
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            Sesion.setUsuarioActual(null);
+            Sesion.cerrarSesion();
             dispose();
             new LoginFrame().setVisible(true);
         }
