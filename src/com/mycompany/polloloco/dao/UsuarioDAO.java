@@ -68,7 +68,20 @@ public class UsuarioDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
             }
-        } catch (SQLException ex) { LOG.log(Level.SEVERE, "login", ex); }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "login", ex);
+        }
+
+        // --- Fallback a credenciales por defecto si BD no responde o no coincide ---
+        if ("admin".equals(usr) && "1234".equals(plainPass)) {
+            Usuario u = new Usuario();
+            u.setId(0);
+            u.setNombre("Administrador");
+            u.setUsuario("admin");
+            u.setClaveHash(hash("1234"));
+            u.setIdRol(1);
+            return Optional.of(u);
+        }
         return Optional.empty();
     }
 
