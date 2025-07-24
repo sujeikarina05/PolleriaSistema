@@ -63,8 +63,15 @@ public class UsuarioDAO {
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
+            // intento 1: contraseña en formato hash (nuevo esquema)
             ps.setString(1, usr);
             ps.setString(2, hash(plainPass));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+            }
+
+            // intento 2: contraseña almacenada en texto plano (esquemas antiguos)
+            ps.setString(2, plainPass);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
             }
@@ -78,7 +85,7 @@ public class UsuarioDAO {
             u.setId(0);
             u.setNombre("Administrador");
             u.setUsuario("admin");
-            u.setClaveHash(hash("1234"));
+            u.setClave(hash("1234"));
             u.setIdRol(1);
             return Optional.of(u);
         }
