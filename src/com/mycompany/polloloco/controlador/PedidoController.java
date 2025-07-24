@@ -2,76 +2,39 @@ package com.mycompany.polloloco.controlador;
 
 import com.mycompany.polloloco.dao.PedidoDAO;
 import com.mycompany.polloloco.modelo.Pedido;
+
 import java.util.List;
 
 /**
- * Controlador para la gestión de pedidos.
- * Aplica la lógica de negocio antes de interactuar con el DAO.
+ * Controlador para operaciones de Pedido.
  */
 public class PedidoController {
 
-    private final PedidoDAO pedidoDAO;
+    private final PedidoDAO pedidoDAO = new PedidoDAO();
 
-    public PedidoController() {
-        this.pedidoDAO = new PedidoDAO();
-    }
-
-    /**
-     * Registra un nuevo pedido si cumple con las condiciones mínimas.
-     * @param pedido el objeto Pedido a registrar
-     * @return true si se registró exitosamente, false si falló por validación
-     */
+    /** Valida y registra un nuevo pedido. */
     public boolean registrarPedido(Pedido pedido) {
         if (pedido == null) {
-            System.err.println("Error: El pedido es nulo.");
+            System.err.println("Pedido nulo");
             return false;
         }
-
         if (pedido.getIdMesa() <= 0) {
-            System.err.println("Error: La mesa no es válida.");
+            System.err.println("Mesa inválida");
             return false;
         }
-
         if (pedido.getDetalle() == null || pedido.getDetalle().isEmpty()) {
-            System.err.println("Error: El pedido no contiene productos.");
+            System.err.println("Pedido sin productos");
             return false;
         }
-
+        // asegúrate de que el total esté calculado
+        pedido.recalcularTotal();
         return pedidoDAO.insertar(pedido);
     }
 
-    /**
-     * Lista todos los pedidos registrados en el sistema.
-     * @return lista de pedidos
-     */
-    public List<Pedido> listarPedidos() {
-        return pedidoDAO.listar();
-    }
+    public List<Pedido> listarPedidos() { return pedidoDAO.listar(); }
 
-    /**
-     * Busca un pedido por su ID.
-     * @param idPedido ID del pedido
-     * @return objeto Pedido o null si no se encuentra
-     */
-    public Pedido buscarPedidoPorId(int idPedido) {
-        return pedidoDAO.buscarPorId(idPedido);
-    }
-
-    /**
-     * Elimina un pedido existente.
-     * @param idPedido ID del pedido a eliminar
-     * @return true si fue eliminado correctamente
-     */
-    public boolean eliminarPedido(int idPedido) {
-        return pedidoDAO.eliminar(idPedido);
-    }
-
-    /**
-     * Actualiza un pedido existente.
-     * @param pedido objeto con los datos actualizados
-     * @return true si fue actualizado correctamente
-     */
-    public boolean actualizarPedido(Pedido pedido) {
-        return pedidoDAO.actualizar(pedido);
+    /* ejemplos de delegación */
+    public boolean actualizarEstado(int id, String estado) {
+        return pedidoDAO.actualizarEstado(id, estado);
     }
 }
