@@ -43,7 +43,12 @@ public class UsuarioDAO {
         u.setUsuario(rs.getString("usuario"));
         u.setClave  (rs.getString("clave")); // hash almacenado
         u.setIdRol  (rs.getInt   ("id_rol"));
-        u.setActivo (rs.getBoolean("activo"));
+        try {
+            u.setActivo(rs.getBoolean("activo"));
+        } catch (SQLException ex) {
+            // la columna 'activo' no existe en algunas bases
+            u.setActivo(true);
+        }
         return u;
     }
 
@@ -54,7 +59,7 @@ public class UsuarioDAO {
      * plano) son correctas y el usuario está activo.
      */
     public Optional<Usuario> login(String usr, String plainPass) {
-        String sql = "SELECT * FROM usuario WHERE usuario=? AND clave=? AND activo=1";
+        String sql = "SELECT * FROM usuario WHERE usuario=? AND clave=?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
