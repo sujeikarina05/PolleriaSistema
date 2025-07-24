@@ -3,46 +3,137 @@ package com.mycompany.polloloco.controlador;
 import com.mycompany.polloloco.dao.UsuarioDAO;
 import com.mycompany.polloloco.modelo.Usuario;
 import com.mycompany.polloloco.util.Sesion;
+import com.mycompany.polloloco.util.ValidadorCampos;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Controlador para la gestión de usuarios.
+ * Controlador responsable de la lógica de negocio asociada a {@link Usuario}.
+ * Encapsula validaciones antes de delegar en {@link UsuarioDAO}.
  */
 public class UsuarioController {
 
-    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private static final Logger LOG = Logger.getLogger(UsuarioController.class.getName());
+
+    private final UsuarioDAO usuarioDAO;
+
+    /* --------------------------------------------------
+     *  Constructores
+     * -------------------------------------------------- */
+
+    /** Constructor por defecto que crea su propio DAO – uso producción. */
+    public UsuarioController() {
+        this(new UsuarioDAO());
+    }
 
     /**
-     * Valida las credenciales del usuario.
-     * @param usuario nombre de usuario
-     * @param clave contraseña
-     * @return true si las credenciales son correctas, false en caso contrario
+     * Constructor inyectable – útil para pruebas unitarias (mock DAO).
+     *
+     * @param usuarioDAO dependencia a inyectar (no nulo)
      */
-    public boolean login(String usuario, String clave) {
-        Usuario u = usuarioDAO.validarCredenciales(usuario, clave);
-        if (u != null) {
-            // Guardar en sesión
-            Sesion.setUsuarioActual(u);
-            return true;
-        } else {
+    public UsuarioController(UsuarioDAO usuarioDAO) {
+        this.usuarioDAO = Objects.requireNonNull(usuarioDAO, "UsuarioDAO no puede ser null");
+    }
+
+    /* --------------------------------------------------
+     *  Autenticación
+     * -------------------------------------------------- */
+
+    /**
+     * Valida las credenciales contra la base de datos. Si son correctas, la
+     * sesión global se inicializa con el usuario devuelto.
+     *
+     * @param user  nombre de usuario (no vacío)
+     * @param pass  contraseña en texto plano (no vacío)
+     * @return      {@code true} si las credenciales son válidas
+     */
+    public boolean login(String user, String pass) {
+        if (ValidadorCampos.esVacio(user) || ValidadorCampos.esVacio(pass)) {
+            LOG.warning("Credenciales vacías");
             return false;
         }
+        Usuario u = usuarioDAO.validarCredenciales(user, pass);
+        if (u != null) {
+            Sesion.setUsuarioActual(u);
+            return true;
+        }
+        return false;
     }
 
-    /**
-     * Retorna el usuario autenticado actual desde la sesión.
-     * @return objeto Usuario logueado
-     */
-    public Usuario getUsuarioActual() {
-        return Sesion.getUsuarioActual();
+    /** Finaliza la sesión actual. */
+    public void logout() { Sesion.setUsuarioActual(null); }
+
+    /** @return Usuario autenticado o {@code null} si nadie inició sesión. */
+    public Usuario getUsuarioActual() { return Sesion.getUsuarioActual(); }
+
+    /* --------------------------------------------------
+     *  CRUD de usuarios
+     * -------------------------------------------------- */
+
+    public List<Usuario> listarUsuarios() { return usuarioDAO.listar(); }
+
+    public Usuario buscarPorId(int id) {
+        if (id <= 0) throw new IllegalArgumentException("ID inválido");
+        return usuarioDAO.buscarPorId(id);
     }
 
-    /** Devuelve la lista de todos los usuarios. */
-    public java.util.List<Usuario> listarUsuarios() {
-        return usuarioDAO.listar();
+    public boolean registrarUsuario(Usuario u) {
+        validarNuevoUsuario(u);
+        return usuarioDAO.insertar(u);
     }
 
-    /** Permite acceso a DAO para vistas sencillas. */
-    public UsuarioDAO getDao() {
-        return usuarioDAO;
+    public boolean actualizarUsuario(Usuario u) {
+        Objects.requireNonNull(u, "Usuario null");
+        if (u.getId() <= 0) throw new IllegalArgumentException("ID inválido");
+        validarCamposBasicos(u);
+        return usuarioDAO.actualizar(u);
     }
+
+    public boolean eliminarUsuario(int id) {
+        if (id <= 0) throw new IllegalArgumentException("ID inválido");
+        if (id == getUsuarioActual().getId()) {
+            LOG.warning("Intento de auto‑eliminación impedido");
+            return false;
+        }
+        return usuarioDAO.eliminar(id);
+    }
+
+    /** Cambio de contraseña con validación de fuerza mínima. */
+    public boolean cambiarPassword(int id, String nuevaClave) {
+        if (id <= 0) throw new IllegalArgumentException("ID inválido");
+        if (ValidadorCampos.esVacio(nuevaClave) || nuevaClave.length() < 6) {
+            LOG.log(Level.WARNING, "Clave demasiado corta");
+            return false;
+        }
+        return usuarioDAO.actualizarPassword(id, nuevaClave);
+    }
+
+    /* --------------------------------------------------
+     *  Validaciones privadas
+     * -------------------------------------------------- */
+
+    private void validarNuevoUsuario(Usuario u) {
+        Objects.requireNonNull(u, "Usuario null");
+        validarCamposBasicos(u);
+        if (ValidadorCampos.esVacio(u.getClave()))
+            throw new IllegalArgumentException("La contraseña es obligatoria");
+        if (usuarioDAO.existeNombreUsuario(u.getUsuario()))
+            throw new IllegalStateException("El nombre de usuario ya existe");
+    }
+
+    private void validarCamposBasicos(Usuario u) {
+        if (ValidadorCampos.esVacio(u.getNombre()))
+            throw new IllegalArgumentException("Nombre requerido");
+        if (ValidadorCampos.esVacio(u.getUsuario()))
+            throw new IllegalArgumentException("Nombre de usuario requerido");
+    }
+
+    /* --------------------------------------------------
+     *  Acceso a DAO (p. ej. para diálogos de la vista)
+     * -------------------------------------------------- */
+
+    public UsuarioDAO getDao() { return usuarioDAO; }
 }

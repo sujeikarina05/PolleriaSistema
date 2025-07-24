@@ -1,61 +1,82 @@
 package com.mycompany.polloloco.modelo;
 
-/** Representa un usuario del sistema. */
-public class Usuario {
-    private int id;
-    private String nombre;
-    private String usuario;
-    private String clave;
-    private String rol;
+import java.io.Serializable;
+import java.util.Objects;
 
-    public Usuario() {
-    }
+/**
+ * Entidad de usuario del sistema (administrador, cajero, mozo, etc.).
+ */
+public class Usuario implements Serializable {
 
-    public Usuario(int id, String nombre, String usuario, String clave, String rol) {
-        this.id = id;
+    private int id;              // PK autoincrement
+    private String nombre;       // nombre completo
+    private String usuario;      // username único
+    private String claveHash;    // SHA‑256 hash
+    private int idRol;           // FK -> rol(id)
+    private boolean activo = true; // soft‑delete
+
+    /* ---------------- Constructores ---------------- */
+    public Usuario() {}
+
+    public Usuario(String nombre, String usuario, String claveHash, int idRol) {
         this.nombre = nombre;
         this.usuario = usuario;
-        this.clave = clave;
-        this.rol = rol;
+        this.claveHash = claveHash;
+        this.idRol = idRol;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
+    public Usuario(int id, String nombre, String usuario, String claveHash, int idRol, boolean activo) {
+        this(nombre, usuario, claveHash, idRol);
         this.id = id;
+        this.activo = activo;
     }
 
-    public String getNombre() {
-        return nombre;
-    }
+    /* ---------------- Getters / Setters ---------------- */
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
+    public String getNombre() { return nombre; }
     public void setNombre(String nombre) {
-        this.nombre = nombre;
+        if (nombre == null || nombre.trim().length() < 3)
+            throw new IllegalArgumentException("Nombre muy corto");
+        this.nombre = nombre.trim();
     }
 
-    public String getUsuario() {
-        return usuario;
-    }
-
+    public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) {
-        this.usuario = usuario;
+        if (usuario == null || usuario.trim().length() < 3)
+            throw new IllegalArgumentException("Usuario muy corto");
+        this.usuario = usuario.trim().toLowerCase();
     }
 
-    public String getClave() {
-        return clave;
-    }
+    public String getClaveHash() { return claveHash; }
+    public void setClaveHash(String claveHash) { this.claveHash = claveHash; }
 
-    public void setClave(String clave) {
-        this.clave = clave;
-    }
+    public int getIdRol() { return idRol; }
+    public void setIdRol(int idRol) { this.idRol = idRol; }
 
-    public String getRol() {
-        return rol;
-    }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
-    public void setRol(String rol) {
-        this.rol = rol;
+    /* ---------------- Utilidades ---------------- */
+    public void desactivar() { this.activo = false; }
+    public void reactivar()  { this.activo = true;  }
+
+    @Override public String toString() { return nombre + " (" + usuario + ")"; }
+
+    @Override public boolean equals(Object o) {
+        return (o instanceof Usuario u) && u.id == id;
+    }
+    @Override public int hashCode() { return Objects.hash(id); }
+
+    /* ---------------- Builder ---------------- */
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private final Usuario u = new Usuario();
+        public Builder nombre(String n){u.setNombre(n); return this;}
+        public Builder usuario(String u1){u.setUsuario(u1); return this;}
+        public Builder claveHash(String c){u.setClaveHash(c); return this;}
+        public Builder idRol(int r){u.setIdRol(r); return this;}
+        public Usuario build(){ return u; }
     }
 }

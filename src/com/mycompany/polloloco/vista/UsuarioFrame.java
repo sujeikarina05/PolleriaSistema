@@ -1,129 +1,91 @@
 package com.mycompany.polloloco.vista;
 
-import com.mycompany.polloloco.controlador.UsuarioController;
-import com.mycompany.polloloco.modelo.Usuario;
+import com.mycompany.polloloco.POLLOLOCO;
+import com.mycompany.polloloco.util.Sesion;
+import com.mycompany.polloloco.vista.panel.MesaPanel;
+import com.mycompany.polloloco.vista.panel.ProductoPanel;
+import com.mycompany.polloloco.vista.panel.ReportePanel;
+import com.mycompany.polloloco.vista.panel.UsuarioPanel;
+import com.mycompany.polloloco.vista.panel.TurnoPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
+import java.awt.event.ActionEvent;
 
-/** Ventana de administración básica de usuarios (UI “Pollería”). */
-public class UsuarioFrame extends JFrame {
+/**
+ * Panel principal del Administrador con acceso a todos los módulos.
+ */
+public class AdminFrame extends JFrame {
 
-    /* ─────  ICONOS REMOTOS  ───── */
-    private static final String ICO_NEW    = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMOg2TMzxNa0M6DC2q6pQuESQfgu7tOgWFgg&s";
-    private static final String ICO_EDIT   = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZQ5NJ07sTnqP-Pe8TANi-lvKZ6Eec5gITxw&s";
-    private static final String ICO_DELETE = "https://cdn-icons-png.flaticon.com/512/3687/3687412.png";
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel panelCentral = new JPanel(cardLayout);
 
-    /* ─────  MVC  ───── */
-    private final UsuarioController controller = new UsuarioController();
-    private final DefaultTableModel modelo = new DefaultTableModel(
-            new Object[]{"ID", "Nombre", "Usuario", "Rol"}, 0);
-
-    private final JTable tabla = new JTable(modelo);
-
-    public UsuarioFrame() {
-        super("Gestión de Usuarios");
-        setSize(700, 460);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        construirUI();
-        cargarDatos();
+    public AdminFrame() {
+        super(POLLOLOCO.TITULO_APP + " - Administración");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        initUI();
+        Sesion.renovarActividad();
+        setVisible(true);
     }
 
-    /* ---------- UI ---------- */
-    private void construirUI() {
-        /* Paleta */
-        Color colFondo   = new Color(0xFFF8E1);          // amarillo pálido
-        Color colHeader  = new Color(0xFFC107);          // ámbar
-        Color colZebra   = new Color(0xFFF3CE);
-        Color colHover   = new Color(0xFFE082);
+    private void initUI() {
+        // Barra de herramientas superior
+        JToolBar toolbar = new JToolBar();
+        toolbar.setFloatable(false);
+        toolbar.add(createButton("Usuarios", e -> showPanel("USU")));
+        toolbar.add(createButton("Productos", e -> showPanel("PRO")));
+        toolbar.add(createButton("Mesas", e -> showPanel("MES")));
+        toolbar.add(createButton("Turnos", e -> showPanel("TUR")));
+        toolbar.add(createButton("Reportes", e -> showPanel("REP")));
+        toolbar.addSeparator();
+        toolbar.add(createButton("Salir", this::logout));
+        add(toolbar, BorderLayout.NORTH);
 
-        setLayout(new BorderLayout());
-        getContentPane().setBackground(colFondo);
+        // Panel central con CardLayout
+        panelCentral.add(new UsuarioPanel(), "USU");
+        panelCentral.add(new ProductoPanel(), "PRO");
+        panelCentral.add(new MesaPanel(), "MES");
+        panelCentral.add(new TurnoPanel(), "TUR");
+        panelCentral.add(new ReportePanel(), "REP");
+        add(panelCentral, BorderLayout.CENTER);
 
-        /* Cabecera */
-        JLabel cab = new JLabel("Listado de usuarios", SwingConstants.CENTER);
-        cab.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        cab.setForeground(Color.DARK_GRAY);
-        cab.setOpaque(true);
-        cab.setBackground(colHeader);
-        cab.setBorder(new EmptyBorder(10, 0, 10, 0));
-        add(cab, BorderLayout.NORTH);
-
-        /* Tabla con zebra */
-        tabla.setRowHeight(24);
-        tabla.setSelectionBackground(new Color(0xFFE082));
-        tabla.setFillsViewportHeight(true);
-        tabla.setDefaultEditor(Object.class, null);          // solo lectura
-        DefaultTableCellRenderer zebra = new DefaultTableCellRenderer() {
-            @Override public Component getTableCellRendererComponent(
-                    JTable t, Object val, boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                setBackground(sel ? colHover : (row % 2 == 0 ? Color.WHITE : colZebra));
-                return this;
-            }
-        };
-        for (int i = 0; i < tabla.getColumnCount(); i++)
-            tabla.getColumnModel().getColumn(i).setCellRenderer(zebra);
-
-        add(new JScrollPane(tabla), BorderLayout.CENTER);
-
-        /* Botonera */
-        JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        botones.setOpaque(false);
-
-        JButton btnNuevo   = crearBoton("Nuevo",   ICO_NEW);
-        JButton btnEditar  = crearBoton("Editar",  ICO_EDIT);
-        JButton btnEliminar= crearBoton("Eliminar",ICO_DELETE);
-
-        botones.add(btnNuevo);
-        botones.add(btnEditar);
-        botones.add(btnEliminar);
-        add(botones, BorderLayout.SOUTH);
-
-        /* Acciones demo */
-        btnNuevo.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Funcionalidad Nuevo (pendiente)"));
-        btnEditar.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Funcionalidad Editar (pendiente)"));
-        btnEliminar.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Funcionalidad Eliminar (pendiente)"));
+        // Panel inicial
+        showPanel("USU");
     }
 
-    /* ---------- Datos ---------- */
-    private void cargarDatos() {
-        modelo.setRowCount(0);
-        List<Usuario> lista = controller.listarUsuarios();
-        for (Usuario u : lista) {
-            modelo.addRow(new Object[]{
-                    u.getId(), u.getNombre(), u.getUsuario(), u.getRol()
-            });
-        }
-    }
-
-    /* ---------- Util ---------- */
-    private JButton crearBoton(String texto, String urlIcon) {
-        ImageIcon ico = new ImageIcon(new ImageIcon(urlIcon)
-                .getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH));
-        JButton b = new JButton(texto, ico);
-        b.setFocusPainted(false);
-        b.setBackground(new Color(0xFFE082));
-        b.setForeground(Color.DARK_GRAY);
-        b.setBorder(BorderFactory.createEmptyBorder(6,12,6,12));
-
-        /* Hover */
-        b.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) {
-                b.setBackground(new Color(0xFFD54F));
-            }
-            @Override public void mouseExited(java.awt.event.MouseEvent e) {
-                b.setBackground(new Color(0xFFE082));
-            }
+    /**
+     * Crea un botón de la barra de herramientas.
+     */
+    private JButton createButton(String title, AbstractAction action) {
+        JButton btn = new JButton(new AbstractAction(title) {
+            { putValue(SMALL_ICON, null); }
+            @Override public void actionPerformed(ActionEvent e) { action.actionPerformed(e); }
         });
-        return b;
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return btn;
+    }
+
+    /**
+     * Muestra el panel identificado por nombre en el CardLayout.
+     */
+    private void showPanel(String name) {
+        cardLayout.show(panelCentral, name);
+        Sesion.renovarActividad();
+    }
+
+    /**
+     * Cierra la sesión y vuelve al LoginFrame.
+     */
+    private void logout(ActionEvent e) {
+        int opt = JOptionPane.showConfirmDialog(this,
+                "¿Cerrar sesión?", "Confirmar",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (opt == JOptionPane.YES_OPTION) {
+            Sesion.cerrar();
+            dispose();
+            new LoginFrame().setVisible(true);
+        }
     }
 }

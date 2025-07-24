@@ -5,31 +5,50 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Objects;
 
-/** Modelo que representa un turno de trabajo (ej. mañana, tarde, noche). */
+/**
+ * Representa un turno de trabajo (mañana, tarde, noche) dentro del restaurante.
+ */
 public class Turno implements Comparable<Turno>, Serializable {
 
-    private int idTurno;
-    private String descripcion;
-    private LocalTime horaInicio;
-    private LocalTime horaFin;
-    private boolean activo = true;
+    private int id;                 // PK autoincrement
+    private String descripcion;     // "Turno Mañana", etc.
+    private LocalTime horaInicio;   // inclusive
+    private LocalTime horaFin;      // exclusive
+    private boolean activo = true;  // soft‑delete
 
+    /* ---------------- Constructores ---------------- */
     public Turno() {}
 
-    public Turno(int idTurno, String descripcion,
-                 LocalTime horaInicio, LocalTime horaFin) {
-        this.idTurno = idTurno;
+    public Turno(int id, String descripcion, LocalTime horaInicio, LocalTime horaFin) {
+        this.id = id;
         this.descripcion = descripcion;
         setHoraInicio(horaInicio);
         setHoraFin(horaFin);
     }
 
-    /* ---------- getters / setters ---------- */
-    public int getIdTurno() { return idTurno; }
-    public void setIdTurno(int idTurno) { this.idTurno = idTurno; }
+    /* ---------------- Builder pattern ---------------- */
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private final Turno t = new Turno();
+        public Builder id(int id) { t.setId(id); return this; }
+        public Builder descripcion(String d) { t.setDescripcion(d); return this; }
+        public Builder inicio(LocalTime h) { t.setHoraInicio(h); return this; }
+        public Builder fin(LocalTime h) { t.setHoraFin(h); return this; }
+        public Builder activo(boolean a) { t.setActivo(a); return this; }
+        public Turno build() { return t; }
+    }
+
+    /* ---------------- Getters / setters ---------------- */
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public void setDescripcion(String descripcion) {
+        if (descripcion == null || descripcion.trim().length() < 3) {
+            throw new IllegalArgumentException("La descripción debe tener al menos 3 caracteres");
+        }
+        this.descripcion = descripcion.trim();
+    }
 
     public LocalTime getHoraInicio() { return horaInicio; }
     public void setHoraInicio(LocalTime horaInicio) {
@@ -46,30 +65,28 @@ public class Turno implements Comparable<Turno>, Serializable {
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
 
-    /* ---------- utilidades ---------- */
-    /** Duración del turno. */
-    public Duration duracion() {
-        return Duration.between(horaInicio, horaFin);
+    /* ---------------- Utilidades ---------------- */
+    public Duration duracion() { return Duration.between(horaInicio, horaFin); }
+
+    public boolean cubre(LocalTime hora) {
+        return !hora.isBefore(horaInicio) && hora.isBefore(horaFin);
     }
 
-    /** Orden natural por hora de inicio. */
-    @Override public int compareTo(Turno o) {
-        return this.horaInicio.compareTo(o.horaInicio);
-    }
+    public Turno desactivar() { this.activo = false; return this; }
 
-    @Override public String toString() {
-        return descripcion + " (" + horaInicio + "‑" + horaFin + ")";
-    }
+    /* Orden natural por hora de inicio */
+    @Override public int compareTo(Turno o) { return this.horaInicio.compareTo(o.horaInicio); }
 
-    @Override public boolean equals(Object o) {
-        return (o instanceof Turno t) && t.idTurno == idTurno;
-    }
-    @Override public int hashCode() { return Objects.hash(idTurno); }
+    /* ---------------- Overrides ---------------- */
+    @Override public String toString() { return descripcion + " (" + horaInicio + "‑" + horaFin + ")"; }
 
-    /* ---------- validación interna ---------- */
+    @Override public boolean equals(Object o) { return (o instanceof Turno t) && t.id == id; }
+
+    @Override public int hashCode() { return Objects.hash(id); }
+
+    /* ---------------- Validación interna ---------------- */
     private void validarHoras() {
-        if (horaInicio != null && horaFin != null &&
-            !horaFin.isAfter(horaInicio)) {
+        if (horaInicio != null && horaFin != null && !horaFin.isAfter(horaInicio)) {
             throw new IllegalArgumentException("horaFin debe ser posterior a horaInicio");
         }
     }

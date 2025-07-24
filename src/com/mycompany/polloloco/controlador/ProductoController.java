@@ -2,85 +2,84 @@ package com.mycompany.polloloco.controlador;
 
 import com.mycompany.polloloco.dao.ProductoDAO;
 import com.mycompany.polloloco.modelo.Producto;
+import com.mycompany.polloloco.util.ValidadorCampos;
+
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Controlador para gestionar operaciones sobre productos.
+ * Capa de orquestación entre la vista y el {@link ProductoDAO}. Implementa
+ * reglas de negocio para altas, bajas y modificaciones de productos.
  */
 public class ProductoController {
 
-    private final ProductoDAO productoDAO;
+    /** DAO inyectable para pruebas unitarias */
+    private final ProductoDAO dao;
 
     public ProductoController() {
-        this.productoDAO = new ProductoDAO();
+        this.dao = new ProductoDAO();
     }
 
-    /**
-     * Obtiene la lista completa de productos.
-     * @return lista de productos
-     */
-    public List<Producto> listarProductos() {
-        return productoDAO.listar();
+    public ProductoController(ProductoDAO dao) {
+        this.dao = Objects.requireNonNull(dao);
     }
 
-    /**
-     * Registra un nuevo producto si los datos son válidos.
-     * @param producto el producto a registrar
-     * @return true si fue registrado correctamente
-     */
-    public boolean registrarProducto(Producto producto) {
-        if (producto == null || producto.getNombre() == null || producto.getNombre().isEmpty()) {
-            System.err.println("Error: El producto debe tener un nombre.");
-            return false;
-        }
+    /* --------------------------------------------------
+     *  Operaciones de consulta
+     * -------------------------------------------------- */
 
-        if (producto.getPrecio() <= 0) {
-            System.err.println("Error: El precio debe ser mayor que cero.");
-            return false;
-        }
-
-        if (producto.getStock() < 0) {
-            System.err.println("Error: El stock no puede ser negativo.");
-            return false;
-        }
-
-        return productoDAO.insertar(producto);
+    public List<Producto> listarTodos() {
+        return dao.listar();
     }
 
-    /**
-     * Actualiza un producto existente.
-     * @param producto producto con datos actualizados
-     * @return true si fue actualizado correctamente
-     */
-    public boolean actualizarProducto(Producto producto) {
-        if (producto == null || producto.getId() <= 0) {
-            System.err.println("Error: Producto inválido para actualizar.");
-            return false;
-        }
-
-        return productoDAO.actualizar(producto);
+    public List<Producto> listarPorCategoria(int idCategoria) {
+        return dao.listarPorCategoria(idCategoria);
     }
 
-    /**
-     * Elimina un producto por ID.
-     * @param idProducto ID del producto a eliminar
-     * @return true si fue eliminado
-     */
-    public boolean eliminarProducto(int idProducto) {
-        if (idProducto <= 0) {
-            System.err.println("Error: ID de producto inválido.");
-            return false;
-        }
-
-        return productoDAO.eliminar(idProducto);
+    public Optional<Producto> buscarPorId(int id) {
+        return dao.buscarPorId(id);
     }
 
-    /**
-     * Busca productos por nombre (coincidencia parcial).
-     * @param nombre nombre o parte del nombre
-     * @return lista de coincidencias
-     */
-    public List<Producto> buscarPorNombre(String nombre) {
-        return productoDAO.buscarPorNombre(nombre);
+    public List<Producto> buscarPorNombre(String texto) {
+        return dao.buscarPorNombre(texto);
+    }
+
+    /* --------------------------------------------------
+     *  Operaciones de mantenimiento
+     * -------------------------------------------------- */
+
+    public boolean crear(Producto p) {
+        validarProducto(p, true);
+        return dao.insertar(p);
+    }
+
+    public boolean actualizar(Producto p) {
+        validarProducto(p, false);
+        return dao.actualizar(p);
+    }
+
+    public boolean eliminar(int idProducto) {
+        if (idProducto <= 0) throw new IllegalArgumentException("ID de producto inválido");
+        return dao.eliminar(idProducto);
+    }
+
+    /* --------------------------------------------------
+     *  Reglas de negocio y validación
+     * -------------------------------------------------- */
+
+    private void validarProducto(Producto p, boolean isNuevo) {
+        Objects.requireNonNull(p, "Producto nulo");
+        if (!isNuevo && p.getId() <= 0)
+            throw new IllegalArgumentException("ID de producto requerido para actualización");
+
+        if (ValidadorCampos.esVacio(p.getNombre()))
+            throw new IllegalArgumentException("El nombre es obligatorio");
+
+        if (p.getPrecio() <= 0)
+            throw new IllegalArgumentException("El precio debe ser mayor a cero");
+
+        if (p.getStock() < 0)
+            throw new IllegalArgumentException("El stock no puede ser negativo");
     }
 }

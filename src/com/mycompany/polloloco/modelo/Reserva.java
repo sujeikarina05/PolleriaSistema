@@ -1,89 +1,105 @@
 package com.mycompany.polloloco.modelo;
 
-import java.util.Date;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
- * Modelo que representa una reserva de mesa en el restaurante.
+ * Representa una reserva de mesa realizada por un cliente.
  */
-public class Reserva {
+public class Reserva implements Serializable {
 
-    private int idReserva;
-    private String cliente;
-    private String contacto;
-    private Mesa mesa;
-    private Date fechaHora;
-    private String estado; // Activa, Cancelada, Atendida, etc.
+    /* ---------------- Enum Estado ---------------- */
+    public enum Estado {
+        ACTIVA,
+        CANCELADA,
+        ATENDIDA;
 
-    public Reserva() {
+        @Override public String toString() {
+            return name().substring(0, 1) + name().substring(1).toLowerCase();
+        }
     }
 
-    public Reserva(String cliente, Mesa mesa, Date fechaHora) {
+    /* ---------------- Campos ---------------- */
+    private int id;                     // PK autoincrement
+    private String cliente;             // nombre del cliente
+    private String contacto;            // teléfono o e‑mail
+    private Mesa mesa;                  // mesa reservada
+    private LocalDateTime fechaHora;    // fecha y hora de la reserva
+    private Estado estado = Estado.ACTIVA;
+    private boolean activo = true;      // para soft‑delete
+
+    /* ---------------- Constructores ---------------- */
+    public Reserva() { }
+
+    public Reserva(String cliente, String contacto, Mesa mesa, LocalDateTime fechaHora) {
         this.cliente = cliente;
+        this.contacto = contacto;
         this.mesa = mesa;
         this.fechaHora = fechaHora;
-        this.estado = "Activa";
     }
 
-    public Reserva(int idReserva, String cliente, String contacto, Mesa mesa, Date fechaHora, String estado) {
-        this.idReserva = idReserva;
+    public Reserva(int id, String cliente, String contacto, Mesa mesa,
+                   LocalDateTime fechaHora, Estado estado, boolean activo) {
+        this.id = id;
         this.cliente = cliente;
         this.contacto = contacto;
         this.mesa = mesa;
         this.fechaHora = fechaHora;
         this.estado = estado;
+        this.activo = activo;
     }
 
-    // Getters y Setters
-    public int getIdReserva() {
-        return idReserva;
-    }
+    /* ---------------- Getters & Setters ---------------- */
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setIdReserva(int idReserva) {
-        this.idReserva = idReserva;
-    }
+    public String getCliente() { return cliente; }
+    public void setCliente(String cliente) { this.cliente = cliente; }
 
-    public String getCliente() {
-        return cliente;
-    }
+    public String getContacto() { return contacto; }
+    public void setContacto(String contacto) { this.contacto = contacto; }
 
-    public void setCliente(String cliente) {
-        this.cliente = cliente;
-    }
+    public Mesa getMesa() { return mesa; }
+    public void setMesa(Mesa mesa) { this.mesa = mesa; }
 
-    public String getContacto() {
-        return contacto;
-    }
+    public LocalDateTime getFechaHora() { return fechaHora; }
+    public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
 
-    public void setContacto(String contacto) {
-        this.contacto = contacto;
-    }
+    public Estado getEstado() { return estado; }
+    public void setEstado(Estado estado) { this.estado = estado; }
 
-    public Mesa getMesa() {
-        return mesa;
-    }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
-    public void setMesa(Mesa mesa) {
-        this.mesa = mesa;
-    }
+    /* ---------------- Lógica ---------------- */
+    public void cancelar() { this.estado = Estado.CANCELADA; }
+    public void atender()  { this.estado = Estado.ATENDIDA;  }
 
-    public Date getFechaHora() {
-        return fechaHora;
-    }
-
-    public void setFechaHora(Date fechaHora) {
-        this.fechaHora = fechaHora;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
+    /* ---------------- Overrides ---------------- */
+    @Override
+    public String toString() {
+        return "Reserva de " + cliente + " | Mesa " + mesa.getNumero() + " | " + fechaHora;
     }
 
     @Override
-    public String toString() {
-        return "Reserva de " + cliente + " para mesa " + mesa.getNumero() + " a las " + fechaHora;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Reserva reserva)) return false;
+        return id == reserva.id;
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(id); }
+
+    /* ---------------- Builder ---------------- */
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private final Reserva r = new Reserva();
+        public Builder cliente(String c) { r.cliente = c; return this; }
+        public Builder contacto(String c) { r.contacto = c; return this; }
+        public Builder mesa(Mesa m) { r.mesa = m; return this; }
+        public Builder fechaHora(LocalDateTime f) { r.fechaHora = f; return this; }
+        public Reserva build() { return r; }
     }
 }

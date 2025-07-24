@@ -1,172 +1,164 @@
 package com.mycompany.polloloco.dao;
 
 import com.mycompany.polloloco.modelo.Usuario;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.mycompany.polloloco.util.ValidadorCampos;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * DAO para validar credenciales de usuario contra la base de datos.
+ * DAO encargado de las operaciones CRUD sobre la tabla <b>usuario</b>.
+ * <p>
+ * La capa de controlador {@link com.mycompany.polloloco.controlador.UsuarioController}
+ * delega aquí todas las consultas, garantizando el hash de contraseña con SHA‑256,
+ * la unicidad del nombre de usuario y la activación/desactivación lógica.
  */
 public class UsuarioDAO {
 
-    /**
-     * Valida las credenciales del usuario.
-     * @param usuario nombre de usuario
-     * @param clave contraseña
-     * @return objeto Usuario si es válido, null si no existe
-     */
-    public Usuario validarCredenciales(String usuario, String clave) {
-        String sql = "SELECT * FROM usuario WHERE usuario = ? AND clave = ?";
+    private static final Logger LOG = Logger.getLogger(UsuarioDAO.class.getName());
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, usuario);
-            ps.setString(2, clave);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                // Obtener el nombre del rol desde la tabla "rol"
-                String rol = obtenerNombreRol(conn, rs.getInt("id_rol"));
-
-                Usuario u = new Usuario();
-                u.setId(rs.getInt("id"));
-                u.setNombre(rs.getString("nombre"));
-                u.setUsuario(rs.getString("usuario"));
-                u.setClave(rs.getString("clave"));
-                u.setRol(rol); // nombre del rol (Administrador, Mozo, etc.)
-
-                return u;
-            }
-
-        } catch (SQLException e) {
-            System.err.println("❌ Error al validar usuario: " + e.getMessage());
+    /* -------------------- util -------------------- */
+    private static String hash(String plain) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] d = md.digest(plain.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : d) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 no disponible", e);
         }
-
-        return null; // Usuario no encontrado
     }
 
-    /**
-     * Obtiene el nombre del rol a partir de su ID.
-     * @param conn conexión activa
-     * @param idRol ID del rol
-     * @return nombre del rol
-     */
-    private String obtenerNombreRol(Connection conn, int idRol) throws SQLException {
-        String sql = "SELECT nombre FROM rol WHERE id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idRol);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getString("nombre");
-            }
-        }
-        return "Desconocido";
+    private Usuario mapRow(ResultSet rs) throws SQLException {
+        Usuario u = new Usuario();
+        u.setId     (rs.getInt   ("id"));
+        u.setNombre (rs.getString("nombre"));
+        u.setUsuario(rs.getString("usuario"));
+        u.setClave  (rs.getString("clave")); // hash almacenado
+        u.setIdRol  (rs.getInt   ("id_rol"));
+        u.setActivo (rs.getBoolean("activo"));
+        return u;
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Métodos CRUD adicionales para la gestión de usuarios              */
-    /* ------------------------------------------------------------------ */
+    /* -------------------- login -------------------- */
 
     /**
-     * Lista todos los usuarios registrados en la base de datos.
+     * Devuelve un {@link Usuario} si las credenciales (usuario + clave en texto
+     * plano) son correctas y el usuario está activo.
      */
-    public java.util.List<Usuario> listar() {
-        java.util.List<Usuario> lista = new java.util.ArrayList<>();
-        String sql = "SELECT u.id, u.nombre, u.usuario, u.clave, r.nombre AS rol "
-                   + "FROM usuario u JOIN rol r ON u.id_rol = r.id";
+    public Optional<Usuario> login(String usr, String plainPass) {
+        String sql = "SELECT * FROM usuario WHERE usuario=? AND clave=? AND activo=1";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, usr);
+            ps.setString(2, hash(plainPass));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+            }
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "login", ex); }
+        return Optional.empty();
+    }
+
+    /* -------------------- create -------------------- */
+
+    public boolean insertar(Usuario u) {
+        if (!ValidadorCampos.esUsuarioValido(u.getUsuario())) return false;
+        if (existeUsuario(u.getUsuario())) return false;
+
+        String sql = "INSERT INTO usuario(nombre, usuario, clave, id_rol) VALUES (?,?,?,?)";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, u.getNombre());
+            ps.setString(2, u.getUsuario());
+            ps.setString(3, hash(u.getClave()));
+            ps.setInt   (4, u.getIdRol());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "insertar", ex); }
+        return false;
+    }
+
+    /* -------------------- read -------------------- */
+
+    public List<Usuario> listar(boolean soloActivos) {
+        List<Usuario> lista = new ArrayList<>();
+        String sql = "SELECT * FROM usuario" + (soloActivos ? " WHERE activo=1" : "");
+
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                Usuario u = new Usuario();
-                u.setId(rs.getInt("id"));
-                u.setNombre(rs.getString("nombre"));
-                u.setUsuario(rs.getString("usuario"));
-                u.setClave(rs.getString("clave"));
-                u.setRol(rs.getString("rol"));
-                lista.add(u);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al listar usuarios: " + e.getMessage());
-        }
-
+            while (rs.next()) lista.add(mapRow(rs));
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "listar", ex); }
         return lista;
     }
 
-    /**
-     * Inserta un nuevo usuario.
-     */
-    public boolean insertar(Usuario u) {
-        String sql = "INSERT INTO usuario(nombre, usuario, clave, id_rol) VALUES(?,?,?,?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, u.getNombre());
-            ps.setString(2, u.getUsuario());
-            ps.setString(3, u.getClave());
-            // suponer que el rol viene como nombre -> obtener id
-            ps.setInt(4, obtenerIdRol(conn, u.getRol()));
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Error al insertar usuario: " + e.getMessage());
-            return false;
-        }
+    public Optional<Usuario> buscarPorId(int id) {
+        String sql = "SELECT * FROM usuario WHERE id=?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+            }
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "buscarPorId", ex); }
+        return Optional.empty();
     }
 
-    /**
-     * Actualiza los datos de un usuario existente.
-     */
+    /* -------------------- update -------------------- */
+
     public boolean actualizar(Usuario u) {
-        String sql = "UPDATE usuario SET nombre=?, usuario=?, clave=?, id_rol=? WHERE id=?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        String sql = "UPDATE usuario SET nombre=?, usuario=?, id_rol=? WHERE id=?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, u.getNombre());
             ps.setString(2, u.getUsuario());
-            ps.setString(3, u.getClave());
-            ps.setInt(4, obtenerIdRol(conn, u.getRol()));
-            ps.setInt(5, u.getId());
+            ps.setInt   (3, u.getIdRol());
+            ps.setInt   (4, u.getId());
             return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar usuario: " + e.getMessage());
-            return false;
-        }
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "actualizar", ex); }
+        return false;
     }
 
-    /** Elimina un usuario por ID. */
-    public boolean eliminar(int id) {
-        String sql = "DELETE FROM usuario WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    public boolean cambiarClave(int id, String nuevaPlain) {
+        String sql = "UPDATE usuario SET clave=? WHERE id=?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, hash(nuevaPlain));
+            ps.setInt   (2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "cambiarClave", ex); }
+        return false;
+    }
 
+    /* -------------------- delete -------------------- */
+
+    public boolean desactivar(int id) {
+        String sql = "UPDATE usuario SET activo=0 WHERE id=?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Error al eliminar usuario: " + e.getMessage());
-            return false;
-        }
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "desactivar", ex); }
+        return false;
     }
 
-    /** Obtiene el ID del rol a partir de su nombre. */
-    private int obtenerIdRol(Connection conn, String nombreRol) throws SQLException {
-        String sql = "SELECT id FROM rol WHERE nombre = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nombreRol);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("id");
-            }
-        }
-        return 0;
+    /* -------------------- helpers -------------------- */
+
+    private boolean existeUsuario(String username) {
+        String sql = "SELECT 1 FROM usuario WHERE usuario=?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException ex) { LOG.log(Level.SEVERE, "existeUsuario", ex); }
+        return true; // por seguridad asumimos que existe
     }
 }
