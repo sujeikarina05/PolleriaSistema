@@ -1,6 +1,7 @@
 package com.mycompany.polloloco.vista;
 
 import com.mycompany.polloloco.util.ReporteExcelExporter;
+import com.mycompany.polloloco.util.ScreenshotUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -44,7 +45,10 @@ public class ReporteFrame extends JFrame {
 
         /* ---------- Pie ---------- */
         JPanel pie = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JButton btnCapturar = new JButton("Capturar");
+        btnCapturar.addActionListener(e -> ScreenshotUtil.capturarComponente(this));
         pie.add(btnExportar);
+        pie.add(btnCapturar);
         add(pie, BorderLayout.SOUTH);
 
         /* ---------- Listeners ---------- */

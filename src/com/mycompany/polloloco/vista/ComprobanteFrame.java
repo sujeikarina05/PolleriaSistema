@@ -2,6 +2,7 @@ package com.mycompany.polloloco.vista;
 
 import javax.swing.*;
 import java.awt.*;
+import com.mycompany.polloloco.util.ScreenshotUtil;
 
 /** Ventana para emitir comprobantes de pago. */
 public class ComprobanteFrame extends JFrame {
@@ -17,5 +18,11 @@ public class ComprobanteFrame extends JFrame {
     private void construirUI() {
         JLabel lbl = new JLabel("Pantalla de emisión de comprobantes en desarrollo", SwingConstants.CENTER);
         add(lbl, BorderLayout.CENTER);
+
+        JButton btnCapturar = new JButton("Capturar");
+        btnCapturar.addActionListener(e -> ScreenshotUtil.capturarComponente(this));
+        JPanel pie = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pie.add(btnCapturar);
+        add(pie, BorderLayout.SOUTH);
     }
 }
