@@ -144,7 +144,7 @@ public class CajeroFrame extends JFrame {
     private void cerrarSesion(ActionEvent e)        {
         if (JOptionPane.showConfirmDialog(this,"¿Cerrar sesión?","Confirmar",
                 JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION) {
-            Sesion.setUsuarioActual(null);
+            Sesion.cerrarSesion();
             dispose();
             new LoginFrame().setVisible(true);
         }

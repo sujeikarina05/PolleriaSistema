@@ -5,6 +5,7 @@ import com.mycompany.polloloco.dao.MesaDAO;
 import com.mycompany.polloloco.dao.ProductoDAO;
 import com.mycompany.polloloco.modelo.DetallePedido;
 import com.mycompany.polloloco.modelo.Mesa;
+import com.mycompany.polloloco.modelo.Mesa.Estado;
 import com.mycompany.polloloco.modelo.Pedido;
 import com.mycompany.polloloco.modelo.Producto;
 import com.mycompany.polloloco.util.ScreenshotUtil;
@@ -64,7 +65,7 @@ public class PedidoFrame extends JFrame {
         sup.setOpaque(false);
         sup.add(new JLabel("Mesa:"));
 
-        List<Mesa> mesasLibres = mesaDAO.listarDisponibles();
+        List<Mesa> mesasLibres = mesaDAO.listarPorEstado(Estado.LIBRE);
         if(mesasLibres.isEmpty()){
             JOptionPane.showMessageDialog(this,
                     "No hay mesas libres en este momento.","Info",
@@ -166,14 +167,14 @@ public class PedidoFrame extends JFrame {
 
         /* ---- Cabecera ---- */
         Pedido p = new Pedido();
-        p.setIdMesa   (mesa.getIdMesa());                       // adapta si tu getter difiere
+        p.setIdMesa   (mesa.getId());
         p.setIdUsuario(Sesion.getUsuarioActual().getId());
         p.setFechaPedido(LocalDateTime.now());
-        p.setDetalle(detalle);
+        for (DetallePedido d : detalle) p.addDetalle(d);
         p.setTotal(total);
 
         if(pedidoCtl.registrarPedido(p)){
-            mesaDAO.cambiarEstado(mesa.getIdMesa(),"Ocupada");
+            mesaDAO.cambiarEstado(mesa.getId(), Estado.OCUPADA);
             JOptionPane.showMessageDialog(this,"Pedido registrado 🤙");
             dispose();
         }else{

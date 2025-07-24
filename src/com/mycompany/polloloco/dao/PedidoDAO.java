@@ -2,7 +2,7 @@ package com.mycompany.polloloco.dao;
 
 import com.mycompany.polloloco.modelo.DetallePedido;
 import com.mycompany.polloloco.modelo.Pedido;
-import com.mycompany.polloloco.modelo.enums.EstadoPedido;
+import com.mycompany.polloloco.modelo.Pedido.Estado;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class PedidoDAO {
         return listarPorEstado(null);
     }
 
-    public List<Pedido> listarPorEstado(EstadoPedido estado) {
+    public List<Pedido> listarPorEstado(Estado estado) {
         List<Pedido> lista = new ArrayList<>();
         StringBuilder sb = new StringBuilder("SELECT * FROM pedido");
         if (estado != null) sb.append(" WHERE estado=?");
@@ -146,7 +146,7 @@ public class PedidoDAO {
         return false;
     }
 
-    public boolean actualizarEstado(int idPedido, EstadoPedido nuevoEstado) {
+    public boolean actualizarEstado(int idPedido, Estado nuevoEstado) {
         String sql = "UPDATE pedido SET estado=? WHERE id=?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -165,7 +165,7 @@ public class PedidoDAO {
      * Eliminación lógica: cambia el estado a «Anulado».
      */
     public boolean eliminar(int idPedido) {
-        return actualizarEstado(idPedido, EstadoPedido.Anulado);
+        return actualizarEstado(idPedido, Estado.ANULADO);
     }
 
     /* ====================================================================== */
@@ -179,7 +179,7 @@ public class PedidoDAO {
         p.setIdUsuario   (rs.getInt("id_usuario"));
         p.setFechaPedido (rs.getTimestamp("fecha_pedido").toLocalDateTime());
         p.setTotal       (rs.getDouble("total"));
-        p.setEstado      (EstadoPedido.valueOf(rs.getString("estado")));
+        p.setEstado      (Estado.valueOf(rs.getString("estado")));
         return p; // detalle se carga aparte si se requiere
     }
 }
