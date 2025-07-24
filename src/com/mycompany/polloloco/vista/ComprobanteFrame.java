@@ -3,6 +3,7 @@ package com.mycompany.polloloco.vista;
 import javax.swing.*;
 import java.awt.*;
 import com.mycompany.polloloco.util.ScreenshotUtil;
+import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 
 /** Ventana para emitir comprobantes de pago. */
 public class ComprobanteFrame extends JFrame {
