@@ -8,6 +8,7 @@ import com.mycompany.polloloco.modelo.Mesa;
 import com.mycompany.polloloco.modelo.Pedido;
 import com.mycompany.polloloco.modelo.Producto;
 import com.mycompany.polloloco.util.Sesion;
+import com.mycompany.polloloco.util.ScreenshotUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -80,9 +81,14 @@ public class PedidoFrame extends JFrame {
         lblTotal = new JLabel("Total: S/. 0.00");
         JButton btnGuardar  = new JButton("Guardar");
         JButton btnCancelar = new JButton("Cancelar");
+        JButton btnCapturar = new JButton("Capturar");
         btnGuardar.addActionListener(e -> guardarPedido());
         btnCancelar.addActionListener(e -> dispose());
-        pie.add(lblTotal); pie.add(btnGuardar); pie.add(btnCancelar);
+        btnCapturar.addActionListener(e -> ScreenshotUtil.capturarComponente(this));
+        pie.add(lblTotal);
+        pie.add(btnGuardar);
+        pie.add(btnCancelar);
+        pie.add(btnCapturar);
         add(pie,BorderLayout.SOUTH);
     }
 
