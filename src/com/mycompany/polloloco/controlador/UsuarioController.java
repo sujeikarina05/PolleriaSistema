@@ -7,6 +7,7 @@ import com.mycompany.polloloco.util.ValidadorCampos;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,16 +56,13 @@ public class UsuarioController {
             LOG.warning("Credenciales vacías");
             return false;
         }
-        Usuario u = usuarioDAO.validarCredenciales(user, pass);
-        if (u != null) {
-            Sesion.setUsuarioActual(u);
-            return true;
-        }
-        return false;
+        return usuarioDAO.login(user, pass)
+                .map(u -> { Sesion.iniciarSesion(u); return true; })
+                .orElse(false);
     }
 
     /** Finaliza la sesión actual. */
-    public void logout() { Sesion.setUsuarioActual(null); }
+    public void logout() { Sesion.cerrarSesion(); }
 
     /** @return Usuario autenticado o {@code null} si nadie inició sesión. */
     public Usuario getUsuarioActual() { return Sesion.getUsuarioActual(); }
@@ -73,9 +71,9 @@ public class UsuarioController {
      *  CRUD de usuarios
      * -------------------------------------------------- */
 
-    public List<Usuario> listarUsuarios() { return usuarioDAO.listar(); }
+    public List<Usuario> listarUsuarios() { return usuarioDAO.listar(true); }
 
-    public Usuario buscarPorId(int id) {
+    public Optional<Usuario> buscarPorId(int id) {
         if (id <= 0) throw new IllegalArgumentException("ID inválido");
         return usuarioDAO.buscarPorId(id);
     }
@@ -98,7 +96,7 @@ public class UsuarioController {
             LOG.warning("Intento de auto‑eliminación impedido");
             return false;
         }
-        return usuarioDAO.eliminar(id);
+        return usuarioDAO.desactivar(id);
     }
 
     /** Cambio de contraseña con validación de fuerza mínima. */
@@ -108,7 +106,7 @@ public class UsuarioController {
             LOG.log(Level.WARNING, "Clave demasiado corta");
             return false;
         }
-        return usuarioDAO.actualizarPassword(id, nuevaClave);
+        return usuarioDAO.cambiarClave(id, nuevaClave);
     }
 
     /* --------------------------------------------------

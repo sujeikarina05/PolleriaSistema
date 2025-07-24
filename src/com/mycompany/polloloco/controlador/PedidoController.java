@@ -2,10 +2,12 @@ package com.mycompany.polloloco.controlador;
 
 import com.mycompany.polloloco.dao.PedidoDAO;
 import com.mycompany.polloloco.modelo.Pedido;
+import com.mycompany.polloloco.modelo.Pedido.Estado;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Controlador para gestionar operaciones de {@link Pedido} aplicando reglas de negocio
@@ -35,35 +37,35 @@ public class PedidoController {
     public boolean registrarPedido(Pedido pedido) {
         if (!esPedidoValido(pedido)) return false;
         pedido.recalcularTotal();
-        return pedidoDAO.insertar(pedido);
+        return pedidoDAO.insertar(pedido) > 0;
     }
 
     /**
      * Obtiene lista completa o filtrada por fecha.
      */
     public List<Pedido> listarPedidos()                   { return pedidoDAO.listar(); }
-    public List<Pedido> listarPorFecha(LocalDate fecha)   { return pedidoDAO.listarPorFecha(fecha); }
-    public List<Pedido> listarPendientes()                { return pedidoDAO.listarPorEstado("Pendiente"); }
+    public List<Pedido> listarPendientes()                { return pedidoDAO.listarPorEstado(Estado.PENDIENTE); }
 
     /**
      * Cambia el estado de un pedido.
      */
-    public boolean actualizarEstado(int id, String estado) {
+    public boolean actualizarEstado(int id, Estado estado) {
         return pedidoDAO.actualizarEstado(id, estado);
     }
 
     /** Marca un pedido como anulado (eliminación lógica). */
     public boolean anularPedido(int id) {
-        return actualizarEstado(id, "Anulado");
+        return actualizarEstado(id, Estado.ANULADO);
     }
 
     /** Registra el pago de un pedido (estado → «Pagado» y registra caja). */
     public boolean registrarPago(int idPedido, double montoPagado) {
-        Pedido p = pedidoDAO.buscarPorId(idPedido);
-        if (p == null) return false;
+        Optional<Pedido> opt = pedidoDAO.buscarPorId(idPedido);
+        if (opt.isEmpty()) return false;
+        Pedido p = opt.get();
         // opcional: validar que monto sea >= total
         if (Double.compare(montoPagado, p.getTotal()) < 0) return false;
-        p.setEstado("Pagado");
+        p.setEstado(Estado.PAGADO);
         return pedidoDAO.actualizar(p);
     }
 

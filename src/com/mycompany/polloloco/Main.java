@@ -2,7 +2,6 @@ package com.mycompany.polloloco;
 
 import com.mycompany.polloloco.dao.DatabaseConnection;
 import com.mycompany.polloloco.vista.LoginFrame;
-import com.mycompany.polloloco.util.Splash;
 
 import javax.swing.*;
 import java.sql.Connection;
@@ -58,11 +57,10 @@ public final class Main {
         }
 
         // 6) Mostrar breve splash mientras carga la GUI
-        Splash.mostrarSplash(1500); // 1.5 s
 
         // 7) Lanzar LoginFrame en el EDT
         SwingUtilities.invokeLater(() -> {
-            new LoginFrame(appProps).setVisible(true);
+            new LoginFrame().setVisible(true);
         });
     }
 

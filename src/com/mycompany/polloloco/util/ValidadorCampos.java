@@ -43,6 +43,11 @@ public final class ValidadorCampos {
     public static boolean contieneSoloLetras(String t)   { return PAT_SOLO_LETRAS.matcher(t).matches(); }
     public static boolean contieneSoloNumeros(String t)  { return PAT_SOLO_NUM.matcher(t).matches(); }
 
+    /** Valida nombre de usuario alfanumérico de al menos 3 caracteres. */
+    public static boolean esUsuarioValido(String t) {
+        return t != null && t.matches("[A-Za-z0-9_]{3,}");
+    }
+
     /* -------------------- Métodos utilitarios avanzados ----------------- */
 
     /**

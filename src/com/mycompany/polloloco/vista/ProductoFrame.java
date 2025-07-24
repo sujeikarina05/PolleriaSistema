@@ -88,7 +88,7 @@ public class ProductoFrame extends JFrame {
     /* ---------- Datos ---------- */
     private void cargarDatos() {
         modelo.setRowCount(0);
-        List<Producto> lista = controller.listarProductos();
+        List<Producto> lista = controller.listarTodos();
         for (Producto p : lista) {
             modelo.addRow(new Object[]{
                     p.getId(), p.getNombre(),

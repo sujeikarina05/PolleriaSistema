@@ -1,7 +1,7 @@
 package com.mycompany.polloloco.dao;
 
 import com.mycompany.polloloco.modelo.Mesa;
-import com.mycompany.polloloco.modelo.enums.EstadoMesa;
+import com.mycompany.polloloco.modelo.Mesa.Estado;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -49,7 +49,7 @@ public class MesaDAO {
         return lista;
     }
 
-    public List<Mesa> listarPorEstado(EstadoMesa estado) {
+    public List<Mesa> listarPorEstado(Mesa.Estado estado) {
         String sql = "SELECT * FROM mesa WHERE estado = ? ORDER BY numero";
         List<Mesa> lista = new ArrayList<>();
         try (Connection cn = DatabaseConnection.getConnection();
@@ -109,7 +109,7 @@ public class MesaDAO {
         return false;
     }
 
-    public boolean cambiarEstado(int idMesa, EstadoMesa nuevoEstado) {
+    public boolean cambiarEstado(int idMesa, Mesa.Estado nuevoEstado) {
         String sql = "UPDATE mesa SET estado=? WHERE id=?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -143,7 +143,7 @@ public class MesaDAO {
                 rs.getInt("id"),
                 rs.getInt("numero"),
                 rs.getInt("capacidad"),
-                EstadoMesa.valueOf(rs.getString("estado"))
+                Mesa.Estado.valueOf(rs.getString("estado"))
         );
     }
 }

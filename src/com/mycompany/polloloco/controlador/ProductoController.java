@@ -51,7 +51,7 @@ public class ProductoController {
 
     public boolean crear(Producto p) {
         validarProducto(p, true);
-        return dao.insertar(p);
+        return dao.insertar(p).isPresent();
     }
 
     public boolean actualizar(Producto p) {
@@ -61,7 +61,7 @@ public class ProductoController {
 
     public boolean eliminar(int idProducto) {
         if (idProducto <= 0) throw new IllegalArgumentException("ID de producto inválido");
-        return dao.eliminar(idProducto);
+        return dao.desactivar(idProducto);
     }
 
     /* --------------------------------------------------
