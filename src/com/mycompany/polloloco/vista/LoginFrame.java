@@ -10,6 +10,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 
 /** Pantalla de ingreso al sistema Pollería Pollo Loco. */
 public class LoginFrame extends JFrame {
@@ -20,7 +21,9 @@ public class LoginFrame extends JFrame {
     private static final Color BG_BTN    = new Color(0xFFD54F);
     private static final Color FG_BTN    = Color.DARK_GRAY;
     private static final String LOGO_URL =
-            "https://i.ibb.co/FXKrzbM/logo-pollo-loco.png"; // cualquier PNG 120×120 transparente
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQW6QuDMFr1LIvxJDHckAggrKHid4x1W3EtpA&s";
+
+    private Image fondo;
 
     /* --------‑ Componentes ‑-------- */
     private final JTextField     txtUsuario = new JTextField(15);
@@ -33,6 +36,11 @@ public class LoginFrame extends JFrame {
         super("Ingreso al Sistema – Pollería Pollo Loco");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
+        try {
+            fondo = new ImageIcon(new URL(LOGO_URL)).getImage();
+        } catch (Exception e) {
+            fondo = null;
+        }
         construirUI();
         pack();
         setLocationRelativeTo(null);
@@ -42,14 +50,21 @@ public class LoginFrame extends JFrame {
     /* ------------------------------------------------- */
     private void construirUI() {
         /* ===== Contenedor ===== */
-        JPanel root = new JPanel(new BorderLayout());
+        JPanel root = new JPanel(new BorderLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (fondo != null) {
+                    g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
         root.setBackground(BG_MAIN);
         root.setBorder(new EmptyBorder(20, 20, 20, 20));
         setContentPane(root);
 
         /* ===== Logo ===== */
         JLabel logo = new JLabel(new ImageIcon(
-                new ImageIcon(LOGO_URL).getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH)));
+                new ImageIcon(LOGO_URL).getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH)));
         logo.setHorizontalAlignment(SwingConstants.CENTER);
         root.add(logo, BorderLayout.NORTH);
 
@@ -70,13 +85,17 @@ public class LoginFrame extends JFrame {
 
         /* Usuario */
         gbc.gridx = 0; gbc.gridy = 0;
-        form.add(new JLabel("Usuario:"), gbc);
+        JLabel lblUser = new JLabel("Usuario:");
+        lblUser.setFont(lblUser.getFont().deriveFont(Font.BOLD, 16f));
+        form.add(lblUser, gbc);
         gbc.gridx = 1;
         form.add(txtUsuario, gbc);
 
         /* Contraseña + toggle */
         gbc.gridx = 0; gbc.gridy = 1;
-        form.add(new JLabel("Contraseña:"), gbc);
+        JLabel lblPass = new JLabel("Contraseña:");
+        lblPass.setFont(lblPass.getFont().deriveFont(Font.BOLD, 16f));
+        form.add(lblPass, gbc);
         gbc.gridx = 1;
         form.add(txtClave, gbc);
         btnToggleClave.setFocusable(false);
@@ -90,7 +109,8 @@ public class LoginFrame extends JFrame {
         btnIngresar.setBackground(BG_BTN);
         btnIngresar.setForeground(FG_BTN);
         btnIngresar.setFocusPainted(false);
-        btnIngresar.setPreferredSize(new Dimension(150, 32));
+        btnIngresar.setFont(btnIngresar.getFont().deriveFont(Font.BOLD, 16f));
+        btnIngresar.setPreferredSize(new Dimension(170, 36));
         form.add(btnIngresar, gbc);
 
         root.add(form, BorderLayout.CENTER);

@@ -31,6 +31,11 @@ public class AdminFrame extends JFrame {
     private static final String ICON_LOGOUT  =
         "https://thumbs.dreamstime.com/b/bot%C3%B3n-redondo-azul-ci%C3%A1nico-vidrioso-de-la-salida-del-sistema-97912713.jpg";
 
+    private static final String LOGO_URL =
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQW6QuDMFr1LIvxJDHckAggrKHid4x1W3EtpA&s";
+
+    private Image fondo;
+
     /* ---------- Componentes ---------- */
     private JLabel  lblBienvenida;
     private JButton btnUsuarios;
@@ -45,6 +50,12 @@ public class AdminFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
         setLayout(new BorderLayout());
+
+        try {
+            fondo = new ImageIcon(new URL(LOGO_URL)).getImage();
+        } catch (Exception e) {
+            fondo = null;
+        }
 
         initComponents();
         actualizarBienvenida();
@@ -63,20 +74,25 @@ public class AdminFrame extends JFrame {
         cabecera.setPreferredSize(new Dimension(getWidth(), 60));
         cabecera.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        JLabel logo = new JLabel(
-                cargarIcono("https://upload.wikimedia.org/wikipedia/commons/7/79/Rotisserie-chicken-icon.png",
-                             32, 32));
+        JLabel logo = new JLabel(cargarIcono(LOGO_URL, 40, 40));
         cabecera.add(logo, BorderLayout.WEST);
 
         lblBienvenida = new JLabel("", SwingConstants.CENTER);
-        lblBienvenida.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblBienvenida.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblBienvenida.setForeground(BLANCO);
         cabecera.add(lblBienvenida, BorderLayout.CENTER);
 
         add(cabecera, BorderLayout.NORTH);
 
         /* ——— Botonera ——— */
-        JPanel centro = new JPanel(new GridLayout(4, 1, 0, 18));
+        JPanel centro = new JPanel(new GridLayout(4, 1, 0, 18)) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (fondo != null) {
+                    g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
         centro.setBorder(BorderFactory.createEmptyBorder(40, 80, 40, 80));
         centro.setBackground(BLANCO);
 
@@ -100,8 +116,8 @@ public class AdminFrame extends JFrame {
 
     /** Helper para crear botones estilizados. */
     private JButton crearBoton(String texto, String url) {
-        JButton b = new JButton(texto, cargarIcono(url, 28, 28));
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        JButton b = new JButton(texto, cargarIcono(url, 36, 36));
+        b.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         b.setHorizontalAlignment(SwingConstants.LEFT);
         b.setIconTextGap(16);
         b.setForeground(BLANCO);
